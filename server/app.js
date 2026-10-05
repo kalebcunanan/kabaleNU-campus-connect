@@ -4,44 +4,41 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
-const errorHandler = require('./middlewares/errorHandler');
+const logger = require('./middlewares/logger');
 const notFound = require('./middlewares/notFound');
+const errorHandler = require('./middlewares/errorHandler');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 
-// 1. CORS - Exact client origin with credentials: true
+// CORS allows only the exact client origin with credentials enabled.
 app.use(cors({
   origin: process.env.CLIENT_URL,
   credentials: true
 }));
 
-// 2 & 3. Body parser and Cookie parser
+// Body and cookie parsers must run before the routers.
 app.use(express.json());
 app.use(cookieParser());
 
-// 4. Request logger middleware
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`);
-  next();
-});
+// The logger prints method, URL, status, and duration for every request.
+app.use(logger);
 
-// 5. Routers
-const userRoutes = require('./routes/userRoutes');
+// Routers are mounted here as each slice is completed.
 app.use('/api/users', userRoutes);
 
+// Health check route for quickly confirming the API is up.
 app.get('/api', (req, res) => {
   res.status(200).json({ message: 'Campus Connect API is running' });
 });
 
-// 6. 404 Catch-all
+// The JSON 404 catch-all and the error handler must stay last.
 app.use(notFound);
-
-// 7. Centralized Error Handler
 app.use(errorHandler);
 
-// Database Connection & Server Start
 const PORT = process.env.PORT || 5000;
 
+// The server starts listening only after MongoDB connects successfully.
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('Connected to MongoDB Atlas');
