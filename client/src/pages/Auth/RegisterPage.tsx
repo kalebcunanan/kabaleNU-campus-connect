@@ -44,7 +44,7 @@ export default function RegisterPage() {
   return (
     <AuthLayout
       title="Join Campus Connect"
-      subtitle="Create your KabeleNU account in a minute."
+      subtitle="Create your KabaleNU account in a minute."
       footer={
         <>
           Already have an account?{' '}

@@ -41,7 +41,7 @@ export default function LoginPage() {
       subtitle="Log in to continue to Campus Connect."
       footer={
         <>
-          New to KabeleNU?{' '}
+          New to KabaleNU?{' '}
           <Link to="/register" className="font-semibold text-nu-gold hover:underline">
             Create an account
           </Link>

@@ -1,4 +1,4 @@
-# KabeleNU "Campus Connect"
+# KabaleNU "Campus Connect"
 
 An exclusive social platform for National University (NU) Clark students and faculty. Campus Connect brings a trending newsfeed, campus events, a student marketplace, and interest-based channels into one place, with NU Blue and Gold branding.
 
@@ -63,8 +63,8 @@ Students and faculty of NU Clark currently rely on scattered Facebook groups for
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/kalebcunanan/kabelenu-campus-connect.git
-cd kabelenu-campus-connect
+git clone https://github.com/kalebcunanan/KabaleNU-campus-connect.git
+cd KabaleNU-campus-connect
 ```
 
 ### 2. Server
