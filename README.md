@@ -38,12 +38,12 @@ Students and faculty of NU Clark currently rely on scattered Facebook groups for
 - [x] JWT authentication with httpOnly cookies and role-based access
 - [x] Login and Register pages with Zod validation
 - [x] Protected routes and session restore
-- [ ] Trending newsfeed, comments, and Bulldog Reacts
-- [ ] Campus events and registration with conflict checking
-- [ ] Marketplace with multi-criteria search and Good Deal badges
-- [ ] Channels and messages
-- [ ] Leaderboard
-- [ ] Content moderation
+- [x] Trending newsfeed, comments, and Bulldog Reacts
+- [x] Campus events and registration with conflict checking
+- [x] Marketplace with multi-criteria search and Good Deal badges
+- [x] Channels and messages
+- [x] Leaderboard
+- [x] Content moderation
 
 ## Screenshots
 
@@ -117,6 +117,8 @@ All errors return JSON in the form `{ "message": "..." }`. Status codes: 200 suc
 | POST | `/api/users/login` | Log in and set the session cookie | Public |
 | POST | `/api/users/logout` | Clear the session cookie | Public |
 | GET | `/api/users/me` | Return the logged-in user | Required |
+| GET | `/api/users/leaderboard` | Return Top 10 students by Bulldog Score | Public |
+| GET | `/api/users/me/registrations` | Return all events the user is attending | Required |
 
 Sample login request:
 
@@ -135,7 +137,38 @@ Sample login response (200):
 }
 ```
 
-The remaining endpoints are added to this table as each slice is completed.
+### Posts and Moderation (`/api/posts`)
+
+| Method | Path | Purpose | Auth |
+| ------ | ---- | ------- | ---- |
+| GET | `/api/posts/trending` | Get posts sorted by Hotness Score | Required |
+| POST | `/api/posts` | Create a new post | Required |
+| POST | `/api/posts/:id/react` | Add a Bulldog React (+1 Hotness Score) | Required |
+| POST | `/api/posts/:id/report` | Report a post (hides after 5 reports) | Required |
+
+### Events (`/api/events`)
+
+| Method | Path | Purpose | Auth |
+| ------ | ---- | ------- | ---- |
+| GET | `/api/events` | Get all campus events | Required |
+| POST | `/api/events` | Create a new event | Faculty only |
+| POST | `/api/events/:id/register` | Register for an event (checks slot capacity and conflicts) | Required |
+
+### Marketplace (`/api/market`)
+
+| Method | Path | Purpose | Auth |
+| ------ | ---- | ------- | ---- |
+| GET | `/api/market/search` | Search items with filters and calculate the average price | Required |
+| POST | `/api/market` | Post a pre-loved item for sale | Required |
+
+### Channels (`/api/channels`)
+
+| Method | Path | Purpose | Auth |
+| ------ | ---- | ------- | ---- |
+| GET | `/api/channels` | Get all interest-based channels | Required |
+| POST | `/api/channels` | Create a new channel | Required |
+| GET | `/api/channels/:id/messages` | Get all messages in a specific channel | Required |
+| POST | `/api/channels/:id/messages` | Send a message to a specific channel | Required |
 
 ## Known Limitations
 
