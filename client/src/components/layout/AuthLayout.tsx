@@ -16,7 +16,7 @@ export default function AuthLayout({ title, subtitle, children, footer, isLeavin
 
   return (
     <AuthBackdrop className="relative min-h-dvh">
-      <main className="relative z-10 flex min-h-dvh flex-col items-center justify-center px-4 py-8">
+      <main className="relative z-10 flex min-h-dvh animate-fade-in flex-col items-center justify-center px-4 py-8">
         <Link to="/" aria-label="KabaleNU home" className={`mb-4 ${fade}`}>
           <img src={logo} alt="KabaleNU" className="h-36 w-auto object-contain sm:h-52" />
         </Link>

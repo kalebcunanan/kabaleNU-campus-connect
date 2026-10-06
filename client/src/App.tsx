@@ -21,30 +21,29 @@ export default function App() {
   return (
     <BrowserRouter>
       <WelcomeProvider>
-      <Routes>
-        {/* Auth pages render their own full-screen layout without the Navbar. */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-
-        <Route element={<MainLayout />}>
+        <Routes>
+          {/* Landing and auth pages render their own full-screen layout without the Navbar. */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
-          <Route element={<ProtectedRoute />}>
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/events" element={<EventsPage />} />
-            <Route path="/events/:id" element={<EventDetailPage />} />
-            <Route path="/marketplace" element={<MarketplacePage />} />
-            <Route path="/channels" element={<ChannelsPage />} />
-            <Route path="/channels/:id" element={<ChannelRoomPage />} />
-            <Route path="/leaderboard" element={<LeaderboardPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
+          <Route element={<MainLayout />}>
+            <Route element={<ProtectedRoute />}>
+              <Route path="/home" element={<HomePage />} />
+              <Route path="/events" element={<EventsPage />} />
+              <Route path="/events/:id" element={<EventDetailPage />} />
+              <Route path="/marketplace" element={<MarketplacePage />} />
+              <Route path="/channels" element={<ChannelsPage />} />
+              <Route path="/channels/:id" element={<ChannelRoomPage />} />
+              <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+            </Route>
+
+            <Route path="*" element={<NotFound />} />
           </Route>
-
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
-      {/* The overlay sits outside Routes so it can cover a route change. */}
-      <WelcomeOverlay />
+        </Routes>
+        {/* The overlay sits outside Routes so it can cover a route change. */}
+        <WelcomeOverlay />
       </WelcomeProvider>
     </BrowserRouter>
   );
