@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, Navigate } from 'react-router-dom';
+import defaultAvatar from '../../assets/avatar/default-avatar.png';
 import AvatarPicker from '../../components/common/AvatarPicker';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -140,7 +141,7 @@ export default function RegisterPage() {
         </div>
 
         <div className={step === 2 ? 'space-y-4' : 'hidden'}>
-          <AvatarPicker previewUrl={previewUrl} error={errors.profilePicture?.message} {...register('profilePicture')} />
+          <AvatarPicker previewUrl={previewUrl || defaultAvatar} error={errors.profilePicture?.message} {...register('profilePicture')} />
           <Select
             label="I am a"
             placeholder="Select one"
