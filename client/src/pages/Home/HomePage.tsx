@@ -1,68 +1,64 @@
-import { useCallback, useEffect, useState } from 'react';
-import Button from '../../components/common/Button';
+import { useState } from 'react';
+import WelcomeEntrance from '../../components/common/WelcomeEntrance';
+import { EmptyState } from '../../components/common/EmptyState';
+import { ErrorState } from '../../components/common/ErrorState';
 import Loader from '../../components/common/Loader';
-import { useAuth } from '../../hooks/useAuth';
-import api, { getErrorMessage } from '../../lib/axios';
 import { CreatePostForm } from '../../components/features/CreatePostForm';
 import { PostCard } from '../../components/features/PostCard';
+import { StoryBar } from '../../components/features/StoryBar';
+import { useAuth } from '../../hooks/useAuth';
+import { useAxiosFetch } from '../../hooks/useAxiosFetch';
+import type { Post } from '../../types/post';
 
 export default function HomePage() {
-  const { user, logout } = useAuth();
-  const [posts, setPosts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { data: posts, loading, error, refetch } = useAxiosFetch<Post[]>('/posts/trending');
+  const [newPosts, setNewPosts] = useState<Post[]>([]);
 
-  const fetchTrendingPosts = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await api.get('/posts/trending');
-      setPosts(response.data);
-    } catch (err: unknown) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const handleRefresh = (): void => {
+    void refetch();
+  };
 
-  useEffect(() => {
-    fetchTrendingPosts();
-  }, [fetchTrendingPosts]);
+  const handleCreated = (post: Post): void => {
+    setNewPosts((previous) => [post, ...previous]);
+  };
+
+  const handleDeleted = (postId: string): void => {
+    setNewPosts((previous) => previous.filter((post) => post._id !== postId));
+    void refetch();
+  };
+
+  // The feed is derived during render: fresh posts first, then the trending list without duplicates.
+  const serverPosts = posts ?? [];
+  const feed = [...newPosts.filter((fresh) => !serverPosts.some((post) => post._id === fresh._id)), ...serverPosts];
 
   if (!user) return null;
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10">
-      {/* Existing Profile Section */}
-      <section className="mb-8 rounded-2xl border-t-4 border-nu-gold bg-white p-6 shadow-lg">
-        <h1 className="text-2xl font-bold text-nu-blue">Hello, {user.name}</h1>
-        <p className="mt-2 text-gray-600">
-          Signed in as {user.email} ({user.role}). Bulldog Score: {user.bulldogScore}
-        </p>
-        <Button variant="outline" className="mt-6" onClick={() => void logout().catch(() => undefined)}>
-          Log out
-        </Button>
-      </section>
+    <div className="mx-auto max-w-2xl">
+      <CreatePostForm onPostCreated={handleCreated} />
 
-      {/* New Trending Feed Section */}
+      <StoryBar />
+
       <section>
-        <h2 className="mb-4 text-xl font-bold text-nu-blue">Trending Feed</h2>
-        <CreatePostForm onPostCreated={fetchTrendingPosts} />
+        <h2 className="mb-4 border-l-4 border-nu-gold pl-3 text-xl font-bold text-nu-blue">Bulldogs Feed</h2>
 
-        {loading ? (
+        {loading && feed.length === 0 ? (
           <Loader label="Loading trending posts..." />
-        ) : error ? (
-          <div className="p-8 text-center font-medium text-red-500">{error}</div>
-        ) : posts.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">Walang pang posts. Maging una sa pag-post!</div>
+        ) : error && feed.length === 0 ? (
+          <ErrorState message={error} onRetry={handleRefresh} />
+        ) : feed.length === 0 ? (
+          <EmptyState message="No posts yet. Be the first to post!" />
         ) : (
           <div className="space-y-4">
-            {posts.map((post) => (
-              <PostCard key={post._id} post={post} onReactUpdated={fetchTrendingPosts} />
+            {feed.map((post, index) => (
+              <WelcomeEntrance key={post._id} index={index}>
+                <PostCard post={post} onDeleted={() => handleDeleted(post._id)} />
+              </WelcomeEntrance>
             ))}
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }

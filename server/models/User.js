@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { ALL_PROGRAMS } = require('../utils/programs');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -26,6 +27,11 @@ const userSchema = new mongoose.Schema({
     enum: ['bulldog', 'bullpup', 'faculty'],
     required: [true, 'Role is required']
   },
+  program: {
+    type: String,
+    enum: { values: ALL_PROGRAMS, message: 'Invalid program selection' }
+  },
+  profilePicture: { type: String, default: '' },
   bulldogScore: {
     type: Number,
     default: 0,

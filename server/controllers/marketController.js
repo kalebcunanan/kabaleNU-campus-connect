@@ -3,9 +3,18 @@ const MarketItem = require('../models/MarketItem');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 
+// Helper function para i-escape ang regex characters
+const escapeRegex = (string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
 exports.createItem = asyncHandler(async (req, res) => {
+  // S3: Explicit fields only
+  const { title, price, category } = req.body;
   const item = await MarketItem.create({
-    ...req.body,
+    title,
+    price,
+    category,
     seller: req.user._id
   });
   res.status(201).json(item);
@@ -23,18 +32,36 @@ exports.getItem = asyncHandler(async (req, res) => {
 });
 
 exports.updateItem = asyncHandler(async (req, res) => {
-  const item = await MarketItem.findOneAndUpdate(
-    { _id: req.params.id, seller: req.user._id },
-    req.body,
-    { new: true, runValidators: true }
-  );
-  if (!item) throw new AppError('Item not found or unauthorized', 403);
+  // S9: Find by ID muna
+  const item = await MarketItem.findById(req.params.id);
+  if (!item) throw new AppError('Item not found', 404);
+
+  // S9: Owner check (seller only)
+  if (item.seller.toString() !== req.user._id.toString()) {
+    throw new AppError('Unauthorized to update this item', 403);
+  }
+
+  // S3: Explicit fields only
+  const { title, price, category } = req.body;
+  if (title) item.title = title;
+  if (price !== undefined) item.price = price;
+  if (category) item.category = category;
+
+  await item.save();
   res.status(200).json(item);
 });
 
 exports.deleteItem = asyncHandler(async (req, res) => {
-  const item = await MarketItem.findOneAndDelete({ _id: req.params.id, seller: req.user._id });
-  if (!item) throw new AppError('Item not found or unauthorized', 403);
+  // S9: Find by ID muna
+  const item = await MarketItem.findById(req.params.id);
+  if (!item) throw new AppError('Item not found', 404);
+
+  // S9: Owner check OR Faculty override
+  if (item.seller.toString() !== req.user._id.toString() && req.user.role !== 'faculty') {
+    throw new AppError('Unauthorized to delete this item', 403);
+  }
+
+  await item.deleteOne();
   res.status(200).json({ message: 'Item deleted' });
 });
 
@@ -50,7 +77,8 @@ exports.searchItems = asyncHandler(async (req, res) => {
     if (minPrice) filter.price.$gte = Number(minPrice);
     if (maxPrice) filter.price.$lte = Number(maxPrice);
   }
-  if (q) filter.title = { $regex: q,$options: 'i' };
+  // S12: I-escape ang regex para hindi mag-crash
+  if (q) filter.title = { $regex: escapeRegex(q),$options: 'i' };
 
   let query = MarketItem.find(filter).populate('seller', 'name');
   if (sort === 'priceAsc') query = query.sort({ price: 1 });
@@ -65,7 +93,9 @@ exports.searchItems = asyncHandler(async (req, res) => {
     const prices = items.map(i => i.price);
     lowestPrice = Math.min(...prices);
     highestPrice = Math.max(...prices);
-    averagePrice = prices.reduce((a, b) => a + b, 0) / items.length;
+    const rawAverage = prices.reduce((a, b) => a + b, 0) / items.length;
+    // S12: I-round off ang average price
+    averagePrice = Math.round(rawAverage * 100) / 100;
   }
 
   res.status(200).json({ 
@@ -80,9 +110,14 @@ exports.searchItems = asyncHandler(async (req, res) => {
 // PROCESSING 4: Rule-based Status Transition
 exports.updateItemStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
-  const item = await MarketItem.findOne({ _id: req.params.id, seller: req.user._id });
-  
-  if (!item) throw new AppError('Item not found or unauthorized', 403);
+  // S9: Find by ID muna
+  const item = await MarketItem.findById(req.params.id);
+  if (!item) throw new AppError('Item not found', 404);
+
+  // S9: Owner check (seller only)
+  if (item.seller.toString() !== req.user._id.toString()) {
+     throw new AppError('Unauthorized to update this item', 403);
+  }
 
   // Transition Rules: Available -> Reserved -> Sold, and Reserved -> Available
   const current = item.status;

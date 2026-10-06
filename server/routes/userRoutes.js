@@ -1,19 +1,30 @@
 const express = require('express');
 const { register, login, logout, me } = require('../controllers/authController');
-// BAGO: I-import ang mga functions mula sa userController
-const { getLeaderboard, getMyRegistrations } = require('../controllers/userController'); 
-const { protect } = require('../middlewares/auth');
+const {
+  getLeaderboard, getMyRegistrations, getUsers, getUser, updateUser, deleteUser,
+} = require('../controllers/userController');
+const { protect, restrictTo } = require('../middlewares/auth');
+const { uploadAvatar } = require('../middlewares/upload');
 
 const router = express.Router();
 
-// Auth Routes
-router.post('/register', register);
+router.post('/register', uploadAvatar, register);
 router.post('/login', login);
-router.post('/logout', protect, logout);
-router.get('/me', protect, me);
 
-// BAGO: User Feature Routes
+router.use(protect);
+
+router.post('/logout', logout);
+
+// Static paths must be registered before the /:id routes.
+router.get('/me', me);
+router.get('/me/registrations', getMyRegistrations);
 router.get('/leaderboard', getLeaderboard);
-router.get('/me/registrations', protect, getMyRegistrations);
+
+router.route('/').get(restrictTo('faculty'), getUsers);
+
+router.route('/:id')
+  .get(getUser)
+  .put(uploadAvatar, updateUser)
+  .delete(restrictTo('faculty'), deleteUser);
 
 module.exports = router;

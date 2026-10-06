@@ -13,26 +13,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const restoreSession = useCallback(async (): Promise<void> => {
+    try {
+      const { data } = await api.get<User>('/users/me');
+      setUser(data);
+    } catch {
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    let isActive = true;
-
-    // Restores the session from the httpOnly cookie on every page load.
-    const restoreSession = async (): Promise<void> => {
-      try {
-        const { data } = await api.get<User>('/users/me');
-        if (isActive) setUser(data);
-      } catch {
-        if (isActive) setUser(null);
-      } finally {
-        if (isActive) setIsLoading(false);
-      }
-    };
-
     void restoreSession();
+  }, [restoreSession]);
 
-    return () => {
-      isActive = false;
-    };
+  // Reloads the user so score changes show up without touching the loading flag.
+  const refreshUser = useCallback(async (): Promise<void> => {
+    try {
+      const { data } = await api.get<User>('/users/me');
+      setUser(data);
+    } catch {
+      // A failed background refresh keeps the current user on screen.
+    }
   }, []);
 
   const login = useCallback(async (payload: LoginPayload): Promise<User> => {
@@ -50,14 +53,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = useCallback(async (): Promise<void> => {
     try {
       await api.post('/users/logout');
+    } catch {
+      // An expired cookie returns 401, and the user is logged out locally either way.
     } finally {
       setUser(null);
     }
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, isLoading, isAuthenticated: user !== null, login, register, logout }),
-    [user, isLoading, login, register, logout],
+    () => ({ user, isLoading, isAuthenticated: user !== null, login, register, logout, refreshUser }),
+    [user, isLoading, login, register, logout, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,18 +12,25 @@ export default function ChannelRoomPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [messages, setMessages] = useState<any[]>([]);
+  const [channelName, setChannelName] = useState<string>('Channel');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<MessageFormData>({
+  const { register, handleSubmit, reset, setError: setFormError, formState: { errors, isSubmitting } } = useForm<MessageFormData>({
     resolver: zodResolver(messageSchema)
   });
 
-  const fetchMessages = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
       setError(null);
-      const response = await api.get(`/channels/${id}/messages`);
-      setMessages(response.data);
+      const [messagesRes, channelsRes] = await Promise.all([
+        api.get(`/channels/${id}/messages`),
+        api.get('/channels')
+      ]);
+      setMessages(messagesRes.data);
+      const channel = channelsRes.data.find((c: any) => c._id === id);
+      if (channel) setChannelName(channel.name);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -32,16 +39,20 @@ export default function ChannelRoomPage() {
   }, [id]);
 
   useEffect(() => {
-    fetchMessages();
-  }, [fetchMessages]);
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const onSendMessage = async (data: MessageFormData) => {
     try {
       await api.post(`/channels/${id}/messages`, data);
       reset();
-      fetchMessages(); // Refresh messages pagkatapos mag-send
+      fetchData(); 
     } catch (err) {
-      setError(getErrorMessage(err));
+      setFormError('root.server', { message: getErrorMessage(err) });
     }
   };
 
@@ -53,11 +64,11 @@ export default function ChannelRoomPage() {
       <div className="mb-4 flex items-center justify-between border-b-2 border-nu-gold pb-4">
         <div>
           <Link to="/channels" className="text-sm font-bold text-gray-500 hover:text-nu-blue">
-            &larr; Back to Channels
+            Back to Channels
           </Link>
-          <h1 className="mt-2 text-2xl font-bold text-nu-blue">Channel Chat</h1>
+          <h1 className="mt-2 text-2xl font-bold text-nu-blue">#{channelName}</h1>
         </div>
-        <Button variant="outline" onClick={fetchMessages}>Refresh</Button>
+        <Button variant="outline" onClick={fetchData}>Refresh</Button>
       </div>
 
       <div className="flex-grow overflow-y-auto rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -80,23 +91,25 @@ export default function ChannelRoomPage() {
                 </div>
               );
             })}
+            <div ref={messagesEndRef} />
           </div>
         )}
       </div>
 
-      <form onSubmit={handleSubmit(onSendMessage)} className="mt-4 flex gap-2">
-        <div className="flex-grow">
+      <form onSubmit={handleSubmit(onSendMessage)} className="mt-4 flex flex-col gap-2">
+        <div className="flex gap-2">
           <input
             {...register('content')}
             autoComplete="off"
             placeholder="Type a message..."
             className="w-full rounded-md border border-gray-300 p-3 focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue"
           />
-          {errors.content && <p className="mt-1 text-xs text-red-500">{errors.content.message}</p>}
+          <Button type="submit" isLoading={isSubmitting} className="h-[50px] px-8">
+            Send
+          </Button>
         </div>
-        <Button type="submit" isLoading={isSubmitting} className="h-[50px] px-8">
-          Send
-        </Button>
+        {errors.content && <p className="text-xs text-red-500">{errors.content.message}</p>}
+        {errors.root?.server && <p className="text-xs font-bold text-red-500">{errors.root.server.message}</p>}
       </form>
     </main>
   );

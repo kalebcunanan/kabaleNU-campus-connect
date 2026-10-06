@@ -10,7 +10,6 @@ export default function MarketplacePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Search Filters State
   const [filters, setFilters] = useState({
     q: '',
     category: '',
@@ -20,18 +19,26 @@ export default function MarketplacePage() {
     sort: 'newest'
   });
 
+  // A7 Fix: Debounce state para hindi mag-spam request sa server
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedFilters(filters), 500);
+    return () => clearTimeout(timer);
+  }, [filters]);
+
   const fetchItems = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
       const queryParams = new URLSearchParams();
-      if (filters.q) queryParams.append('q', filters.q);
-      if (filters.category) queryParams.append('category', filters.category);
-      if (filters.status) queryParams.append('status', filters.status);
-      if (filters.minPrice) queryParams.append('minPrice', filters.minPrice);
-      if (filters.maxPrice) queryParams.append('maxPrice', filters.maxPrice);
-      if (filters.sort) queryParams.append('sort', filters.sort);
+      if (debouncedFilters.q) queryParams.append('q', debouncedFilters.q);
+      if (debouncedFilters.category) queryParams.append('category', debouncedFilters.category);
+      if (debouncedFilters.status) queryParams.append('status', debouncedFilters.status);
+      if (debouncedFilters.minPrice) queryParams.append('minPrice', debouncedFilters.minPrice);
+      if (debouncedFilters.maxPrice) queryParams.append('maxPrice', debouncedFilters.maxPrice);
+      if (debouncedFilters.sort) queryParams.append('sort', debouncedFilters.sort);
 
       const response = await api.get(`/market/search?${queryParams.toString()}`);
       setItems(response.data.items);
@@ -46,7 +53,7 @@ export default function MarketplacePage() {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [debouncedFilters]);
 
   useEffect(() => {
     fetchItems();
@@ -82,6 +89,16 @@ export default function MarketplacePage() {
               <input type="text" name="q" value={filters.q} onChange={handleFilterChange} placeholder="Keywords..." className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue" />
             </div>
             
+            {/* A25 Fix: Sort UI */}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Sort By</label>
+              <select name="sort" value={filters.sort} onChange={handleFilterChange} className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue">
+                <option value="newest">Newest First</option>
+                <option value="priceAsc">Price: Low to High</option>
+                <option value="priceDesc">Price: High to Low</option>
+              </select>
+            </div>
+            
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">Category</label>
               <select name="category" value={filters.category} onChange={handleFilterChange} className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue">
@@ -106,11 +123,11 @@ export default function MarketplacePage() {
             <div className="flex gap-2">
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">Min ₱</label>
-                <input type="number" name="minPrice" value={filters.minPrice} onChange={handleFilterChange} className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue" />
+                <input type="number" name="minPrice" value={filters.minPrice} onChange={handleFilterChange} min="0" className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue" />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">Max ₱</label>
-                <input type="number" name="maxPrice" value={filters.maxPrice} onChange={handleFilterChange} className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue" />
+                <input type="number" name="maxPrice" value={filters.maxPrice} onChange={handleFilterChange} min="0" className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue" />
               </div>
             </div>
           </div>

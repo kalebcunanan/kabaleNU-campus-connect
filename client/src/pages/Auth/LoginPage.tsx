@@ -3,8 +3,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
+import Loader from '../../components/common/Loader';
+import PasswordInput from '../../components/common/PasswordInput';
 import AuthLayout from '../../components/layout/AuthLayout';
 import { useAuth } from '../../hooks/useAuth';
+import { useWelcomeSubmit } from '../../hooks/useWelcomeSubmit';
 import { getErrorMessage } from '../../lib/axios';
 import { loginSchema } from '../../schemas/auth';
 import type { LoginFormValues } from '../../schemas/auth';
@@ -14,9 +17,11 @@ interface LocationState {
 }
 
 export default function LoginPage() {
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
   const redirectTo = (location.state as LocationState | null)?.from ?? '/home';
+
+  const { run, isPending, isLeaving } = useWelcomeSubmit('login', redirectTo);
 
   const {
     register,
@@ -27,23 +32,25 @@ export default function LoginPage() {
 
   const onSubmit = async (values: LoginFormValues): Promise<void> => {
     try {
-      await login(values);
+      await run(() => login(values));
     } catch (error) {
       setError('root.server', { message: getErrorMessage(error) });
     }
   };
 
-  if (isAuthenticated) return <Navigate to={redirectTo} replace />;
+  if (isLoading) return <Loader label="Checking your session..." />;
+  if (isAuthenticated && !isPending) return <Navigate to={redirectTo} replace />;
 
   return (
     <AuthLayout
-      title="Welcome back, Bulldog"
-      subtitle="Log in to continue to Campus Connect."
+      isLeaving={isLeaving}
+      title="Welcome back, Bulldog!"
+      subtitle="Anong chika sa campus? Log in to catch up."
       footer={
         <>
           New to KabaleNU?{' '}
           <Link to="/register" className="font-semibold text-nu-gold hover:underline">
-            Create an account
+            Join the pack
           </Link>
         </>
       }
@@ -55,14 +62,13 @@ export default function LoginPage() {
           </p>
         )}
         <Input label="Email" type="email" autoComplete="email" error={errors.email?.message} {...register('email')} />
-        <Input
+        <PasswordInput
           label="Password"
-          type="password"
           autoComplete="current-password"
           error={errors.password?.message}
           {...register('password')}
         />
-        <Button type="submit" variant="primary" isLoading={isSubmitting} className="w-full">
+        <Button type="submit" variant="primary" isLoading={isSubmitting || isPending} className="w-full">
           Log in
         </Button>
       </form>

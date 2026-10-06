@@ -1,9 +1,11 @@
 import type { ComponentPropsWithRef } from 'react';
 
 type ButtonVariant = 'primary' | 'gold' | 'outline';
+type ButtonSize = 'md' | 'sm';
 
 interface ButtonProps extends ComponentPropsWithRef<'button'> {
   variant?: ButtonVariant;
+  size?: ButtonSize;
   isLoading?: boolean;
 }
 
@@ -13,8 +15,14 @@ const variantClasses: Record<ButtonVariant, string> = {
   outline: 'border border-nu-blue text-nu-blue hover:bg-nu-blue/5',
 };
 
+const sizeClasses: Record<ButtonSize, string> = {
+  md: 'px-4 py-2.5',
+  sm: 'px-3 py-1.5 text-sm',
+};
+
 export default function Button({
   variant = 'primary',
+  size = 'md',
   isLoading = false,
   disabled,
   type = 'button',
@@ -26,7 +34,7 @@ export default function Button({
     <button
       type={type}
       disabled={disabled || isLoading}
-      className={`inline-flex items-center justify-center rounded-lg px-4 py-2.5 font-semibold shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-nu-gold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${variantClasses[variant]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-lg font-semibold shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-nu-gold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
       {...rest}
     >
       {isLoading ? 'Please wait...' : children}

@@ -53,16 +53,25 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({ item, averagePri
         {isOwner ? (
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-500">Update Status:</span>
-            <select
-              value={item.status}
-              onChange={handleStatusChange}
-              disabled={loading}
-              className="rounded-md border border-gray-300 bg-white p-1 text-sm outline-none focus:border-nu-blue"
-            >
-              <option value="Available">Available</option>
-              <option value="Reserved">Reserved</option>
-              <option value="Sold">Sold</option>
-            </select>
+            {item.status === 'Sold' ? (
+              <span className="px-2 py-1 bg-gray-200 rounded text-sm text-gray-600 font-bold">Sold</span>
+            ) : (
+              <select
+                value={item.status}
+                onChange={handleStatusChange}
+                disabled={loading}
+                className="rounded-md border border-gray-300 bg-white p-1 text-sm outline-none focus:border-nu-blue"
+              >
+                <option value={item.status} disabled>{item.status}</option>
+                {item.status === 'Available' && <option value="Reserved">Reserved</option>}
+                {item.status === 'Reserved' && (
+                  <>
+                    <option value="Available">Available</option>
+                    <option value="Sold">Sold</option>
+                  </>
+                )}
+              </select>
+            )}
           </div>
         ) : (
           <span className={`block w-full rounded-md py-2 text-center text-sm font-bold ${

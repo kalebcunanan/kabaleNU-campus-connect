@@ -1,4 +1,3 @@
-// server/controllers/postController.js
 const Post = require('../models/Post');
 const Reaction = require('../models/Reaction');
 const Comment = require('../models/Comment');
@@ -6,107 +5,152 @@ const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 const calculateHotness = require('../utils/hotness');
+const { uploadMedia, deleteMedia } = require('../utils/cloudinary');
+
+const AUTHOR_FIELDS = 'name role program profilePicture';
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
 exports.createPost = asyncHandler(async (req, res) => {
-  const post = await Post.create({
-    author: req.user._id,
-    content: req.body.content
-  });
-  // Award +5 bulldogScore to the author
+  const { content = '' } = req.body || {};
+  const files = req.files || [];
+
+  if (!content.trim() && files.length === 0) {
+    throw new AppError('Write something or attach a photo or video', 400);
+  }
+  if (files.some((file) => file.mimetype.startsWith('image/') && file.size > MAX_IMAGE_SIZE)) {
+    throw new AppError('Photos must be 10MB or smaller', 400);
+  }
+
+  const media = await uploadMedia(files);
+
+  let post;
+  try {
+    post = await Post.create({ author: req.user._id, content, media });
+  } catch (error) {
+    await deleteMedia(media);
+    throw error;
+  }
+
   await User.findByIdAndUpdate(req.user._id, { $inc: { bulldogScore: 5 } });
-  res.status(201).json(post);
+
+  // The client prepends this post to the feed, so it must include the populated author.
+  const created = await Post.findById(post._id).populate('author', AUTHOR_FIELDS).lean();
+  res.status(201).json({ ...created, hasReacted: false });
 });
 
 exports.getPosts = asyncHandler(async (req, res) => {
   const posts = await Post.find({ status: 'active' })
     .sort({ createdAt: -1 })
-    .populate('author', 'name role');
-  res.status(200).json(posts);
+    .populate('author', AUTHOR_FIELDS)
+    .lean();
+
+  const userReacts = await Reaction.find({ user: req.user._id }).select('post');
+  const reactedPostIds = userReacts.map((r) => r.post.toString());
+
+  const updatedPosts = posts.map((post) => {
+    post.hasReacted = reactedPostIds.includes(post._id.toString());
+    return post;
+  });
+
+  res.status(200).json(updatedPosts);
 });
 
 exports.getTrendingPosts = asyncHandler(async (req, res) => {
-  const posts = await Post.find({ status: 'active' }).populate('author', 'name role').lean();
-  
-  const trending = posts.map(post => {
-    post.hotness = calculateHotness(post.bulldogReacts, post.commentCount, post.createdAt);
-    return post;
-  }).sort((a, b) => b.hotness - a.hotness);
+  const posts = await Post.find({ status: 'active' }).populate('author', AUTHOR_FIELDS).lean();
+
+  const userReacts = await Reaction.find({ user: req.user._id }).select('post');
+  const reactedPostIds = userReacts.map((r) => r.post.toString());
+
+  const trending = posts
+    .map((post) => {
+      post.hotness = calculateHotness(post.bulldogReacts, post.commentCount, post.createdAt);
+      post.hasReacted = reactedPostIds.includes(post._id.toString());
+      return post;
+    })
+    .sort((a, b) => b.hotness - a.hotness);
 
   res.status(200).json(trending);
 });
 
 exports.getPost = asyncHandler(async (req, res) => {
-  const post = await Post.findOne({ _id: req.params.id, status: 'active' }).populate('author', 'name role');
+  const post = await Post.findOne({ _id: req.params.id, status: 'active' }).populate('author', AUTHOR_FIELDS).lean();
   if (!post) throw new AppError('Post not found', 404);
+
+  const reaction = await Reaction.findOne({ user: req.user._id, post: post._id });
+  post.hasReacted = !!reaction;
+
   res.status(200).json(post);
 });
 
 exports.updatePost = asyncHandler(async (req, res) => {
-  const post = await Post.findOneAndUpdate(
-    { _id: req.params.id, author: req.user._id },
-    { content: req.body.content },
-    { new: true, runValidators: true }
-  );
-  if (!post) throw new AppError('Post not found or you are not the owner', 403);
+  const post = await Post.findById(req.params.id);
+  if (!post) throw new AppError('Post not found', 404);
+
+  if (post.author.toString() !== req.user._id.toString()) {
+    throw new AppError('Unauthorized to update this post', 403);
+  }
+
+  const { content } = req.body || {};
+  if (content !== undefined) post.content = content;
+  await post.save();
   res.status(200).json(post);
 });
 
 exports.deletePost = asyncHandler(async (req, res) => {
-  const post = await Post.findOneAndDelete({ _id: req.params.id, author: req.user._id });
-  if (!post) throw new AppError('Post not found or you are not the owner', 403);
-  
-  // Cleanup references
-  await Reaction.deleteMany({ post: post._id });
-  await Comment.deleteMany({ post: post._id });
-  
-  res.status(200).json({ message: 'Post deleted successfully' });
-});
-
-exports.reactToPost = asyncHandler(async (req, res) => {
-  const post = await Post.findById(req.params.id);
-  if (!post || post.status !== 'active') throw new AppError('Post not found', 404);
-  if (post.author.toString() === req.user._id.toString()) throw new AppError('Cannot react to your own post', 400);
-
-  const existingReact = await Reaction.findOne({ user: req.user._id, post: post._id });
-  if (existingReact) throw new AppError('Already reacted to this post', 400);
-
-  await Reaction.create({ user: req.user._id, post: post._id });
-  await Post.findByIdAndUpdate(post._id, { $inc: { bulldogReacts: 1 } });
-  await User.findByIdAndUpdate(post.author, { $inc: { bulldogScore: 1 } });
-
-  res.status(200).json({ message: 'Reacted successfully' });
-});
-
-exports.unreactToPost = asyncHandler(async (req, res) => {
   const post = await Post.findById(req.params.id);
   if (!post) throw new AppError('Post not found', 404);
 
-  const reaction = await Reaction.findOneAndDelete({ user: req.user._id, post: post._id });
-  if (!reaction) throw new AppError('No reaction found', 400);
+  if (post.author.toString() !== req.user._id.toString() && req.user.role !== 'faculty') {
+    throw new AppError('Unauthorized to delete this post', 403);
+  }
 
-  await Post.findByIdAndUpdate(post._id, { $inc: { bulldogReacts: -1 } });
-  await User.findByIdAndUpdate(post.author, { $inc: { bulldogScore: -1 } });
+  await post.deleteOne();
+  await Reaction.deleteMany({ post: post._id });
+  await Comment.deleteMany({ post: post._id });
+  await deleteMedia(post.media);
 
-  res.status(200).json({ message: 'Reaction removed' });
+  res.status(200).json({ message: 'Post deleted successfully' });
+});
+
+// React is a toggle: the first call adds the reaction and the next call removes it.
+exports.reactToPost = asyncHandler(async (req, res) => {
+  const post = await Post.findById(req.params.id);
+  if (!post || post.status !== 'active') throw new AppError('Post not found', 404);
+
+  const removed = await Reaction.findOneAndDelete({ user: req.user._id, post: post._id });
+
+  if (removed) {
+    await Promise.all([
+      Post.updateOne({ _id: post._id, bulldogReacts: { $gt: 0 } }, { $inc: { bulldogReacts: -1 } }),
+      User.updateOne({ _id: post.author, bulldogScore: { $gt: 0 } }, { $inc: { bulldogScore: -1 } }),
+    ]);
+    return res.status(200).json({ message: 'Reaction removed', hasReacted: false });
+  }
+
+  await Reaction.create({ user: req.user._id, post: post._id });
+  await Promise.all([
+    Post.updateOne({ _id: post._id }, { $inc: { bulldogReacts: 1 } }),
+    User.updateOne({ _id: post.author }, { $inc: { bulldogScore: 1 } }),
+  ]);
+  res.status(200).json({ message: 'Reacted successfully', hasReacted: true });
 });
 
 exports.reportPost = asyncHandler(async (req, res) => {
-  const post = await Post.findById(req.params.id);
-  if (!post || post.status !== 'active') throw new AppError('Post not found', 404);
-  if (post.reportedBy.includes(req.user._id)) throw new AppError('You have already reported this post', 400);
-
-  const updatedPost = await Post.findByIdAndUpdate(
-    req.params.id,
-    { 
-      $addToSet: { reportedBy: req.user._id },
-      $inc: { reportCount: 1 }
-    },
+  // One atomic update rejects missing, hidden, and already-reported posts at the same time.
+  const updatedPost = await Post.findOneAndUpdate(
+    { _id: req.params.id, status: 'active', reportedBy: { $ne: req.user._id } },
+    { $addToSet: { reportedBy: req.user._id }, $inc: { reportCount: 1 } },
     { new: true }
   );
 
+  if (!updatedPost) {
+    const exists = await Post.findById(req.params.id).select('status');
+    if (!exists || exists.status !== 'active') throw new AppError('Post not found', 404);
+    throw new AppError('You have already reported this post', 400);
+  }
+
   if (updatedPost.reportCount >= 5) {
-    updatedPost.status = 'hidden';
-    await updatedPost.save();
+    await Post.updateOne({ _id: updatedPost._id }, { status: 'hidden' });
   }
 
   res.status(200).json({ message: 'Post reported successfully' });

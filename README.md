@@ -31,15 +31,21 @@ Students and faculty of NU Clark currently rely on scattered Facebook groups for
 ## Tech Stack
 
 - **Client:** React (Vite), TypeScript, Tailwind CSS, React Router, React Hook Form, Zod, Axios
-- **Server:** Node.js, Express, MongoDB Atlas, Mongoose, JWT in httpOnly cookies, bcryptjs
+- **Server:** Node.js, Express, MongoDB Atlas, Mongoose, JWT in httpOnly cookies, bcryptjs, Multer
+- **Media:** Cloudinary for profile pictures, post photos and videos, story media, and event banners
+- **Hosting:** Client deployed on Vercel
 
 ## Features
 
 - [x] JWT authentication with httpOnly cookies and role-based access
 - [x] Login and Register pages with Zod validation
 - [x] Protected routes and session restore
+- [x] Animated welcome transition after login and register
+- [x] Profile pictures chosen during registration
 - [x] Trending newsfeed, comments, and Bulldog Reacts
-- [x] Campus events and registration with conflict checking
+- [x] Posts with up to 4 photos or videos
+- [x] Stories
+- [x] Campus events with banner images and registration with conflict checking
 - [x] Marketplace with multi-criteria search and Good Deal badges
 - [x] Channels and messages
 - [x] Leaderboard
@@ -50,60 +56,14 @@ Students and faculty of NU Clark currently rely on scattered Facebook groups for
 ### Login
 ![Login page](docs/screenshots/login.png)
 
+### Register
+![Register page](docs/screenshots/register.png)
+
 ### Home
 ![Home page](docs/screenshots/home.png)
 
-## Setup
-
-### Prerequisites
-
-- Node.js 18.11 or newer
-- A MongoDB Atlas cluster and connection string
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/kalebcunanan/KabaleNU-campus-connect.git
-cd KabaleNU-campus-connect
-```
-
-### 2. Server
-
-```bash
-cd server
-npm install
-cp .env.example .env
-npm run dev
-```
-
-Fill in `server/.env`:
-
-| Variable | Description | Example |
-| -------- | ----------- | ------- |
-| `PORT` | Port the API listens on | `5000` |
-| `MONGO_URI` | MongoDB Atlas connection string | `mongodb+srv://<user>:<password>@<cluster>/campus-connect` |
-| `JWT_SECRET` | Secret used to sign tokens | a long random string |
-| `JWT_EXPIRES_IN` | Token lifetime | `7d` |
-| `CLIENT_URL` | Exact client origin allowed by CORS | `http://localhost:5173` |
-
-### 3. Client
-
-```bash
-cd client
-npm install
-npm run dev
-```
-
-The app runs at `http://localhost:5173` and talks to the API through a single configured Axios instance in `client/src/lib/axios.ts`.
-
-### 4. Seed data
-
-Run this after the seed script is added in `server/utils/seedData.js`:
-
-```bash
-cd server
-node utils/seedData.js
-```
+### Events
+![Events page](docs/screenshots/events.png)
 
 ## API Documentation
 
@@ -141,10 +101,16 @@ Sample login response (200):
 
 | Method | Path | Purpose | Auth |
 | ------ | ---- | ------- | ---- |
+| GET | `/api/posts` | Get active posts, newest first | Required |
 | GET | `/api/posts/trending` | Get posts sorted by Hotness Score | Required |
-| POST | `/api/posts` | Create a new post | Required |
-| POST | `/api/posts/:id/react` | Add a Bulldog React (+1 Hotness Score) | Required |
+| POST | `/api/posts` | Create a post (multipart: `content` and up to 4 `media` files) | Required |
+| GET | `/api/posts/:id` | Get one active post | Required |
+| PUT | `/api/posts/:id` | Edit the content of your own post | Author only |
+| DELETE | `/api/posts/:id` | Delete a post with its comments and reactions | Author or faculty |
+| POST | `/api/posts/:id/react` | Toggle a Bulldog React on or off | Required |
 | POST | `/api/posts/:id/report` | Report a post (hides after 5 reports) | Required |
+| GET | `/api/posts/:id/comments` | Get the comments of a post | Required |
+| POST | `/api/posts/:id/comments` | Add a comment to a post | Required |
 
 ### Events (`/api/events`)
 
@@ -169,9 +135,3 @@ Sample login response (200):
 | POST | `/api/channels` | Create a new channel | Required |
 | GET | `/api/channels/:id/messages` | Get all messages in a specific channel | Required |
 | POST | `/api/channels/:id/messages` | Send a message to a specific channel | Required |
-
-## Known Limitations
-
-- Channels use HTTP refresh instead of WebSockets, so messages are not real time.
-- Payments, file uploads, and deployment are outside the MVP scope.
-- Images are not uploaded; posts and items are text based.

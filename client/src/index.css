@@ -2,4 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Pwede ka magdagdag ng custom CSS variables dito mamaya kung kailangan */
+@layer base {
+  html,
+  body,
+  button,
+  input,
+  select,
+  textarea {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  /* Gold halftone dots that fade out toward the bottom-left. */
+  .halftone-gold {
+    background-image: radial-gradient(circle, #ffd42a 1.6px, transparent 2px);
+    background-size: 16px 16px;
+    -webkit-mask-image: linear-gradient(225deg, #000 0%, transparent 65%);
+    mask-image: linear-gradient(225deg, #000 0%, transparent 65%);
+  }
+
+  /* The sketch melts into the gradient by fading out toward its top edge. */
+  .sketch-fade {
+    -webkit-mask-image: linear-gradient(to top, #000 55%, transparent 100%);
+    mask-image: linear-gradient(to top, #000 55%, transparent 100%);
+  }
+}
