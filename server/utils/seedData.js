@@ -10,9 +10,14 @@ const Registration = require('../models/Registration');
 const MarketItem = require('../models/MarketItem');
 const Channel = require('../models/Channel');
 const Message = require('../models/Message');
+const Conversation = require('../models/Conversation');
 
-const HOUR = 60 * 60 * 1000;
+const MINUTE = 60 * 1000;
+const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
+
+// Builds a placeholder photo URL because seeded items are not uploaded through Cloudinary.
+const sampleImage = (label) => `https://placehold.co/600x400/2455a6/ffd42a?text=${encodeURIComponent(label)}`;
 
 const seedDB = async () => {
   try {
@@ -27,6 +32,7 @@ const seedDB = async () => {
       User.deleteMany(), Post.deleteMany(), Comment.deleteMany(),
       Reaction.deleteMany(), Event.deleteMany(), Registration.deleteMany(),
       MarketItem.deleteMany(), Channel.deleteMany(), Message.deleteMany(),
+      Conversation.deleteMany(),
     ]);
 
     const now = Date.now();
@@ -86,13 +92,32 @@ const seedDB = async () => {
     ]);
 
     console.log('Seeding marketplace items...');
-    await MarketItem.create([
-      { seller: users[1]._id, title: '2nd Hand IT Uniform (Medium)', price: 350, category: 'Uniforms', status: 'Available' },
-      { seller: users[6]._id, title: 'Data Structures Book', price: 400, category: 'Books', status: 'Available' },
-      { seller: users[4]._id, title: 'Scientific Calculator', price: 800, category: 'Electronics', status: 'Reserved' },
-      { seller: users[3]._id, title: 'PE Uniform (Large)', price: 250, category: 'Uniforms', status: 'Sold' },
-      { seller: users[5]._id, title: 'Drawing Tablet', price: 1500, category: 'Electronics', status: 'Available' },
-      { seller: users[6]._id, title: 'Database Systems Book', price: 300, category: 'Books', status: 'Available' },
+    const items = await MarketItem.create([
+      { seller: users[1]._id, title: '2nd Hand IT Uniform (Medium)', price: 350, category: 'Clothes', image: sampleImage('IT Uniform'), status: 'Available' },
+      { seller: users[6]._id, title: 'Data Structures Book', price: 400, category: 'School Materials', image: sampleImage('DSA Book'), status: 'Available' },
+      { seller: users[4]._id, title: 'Scientific Calculator', price: 800, category: 'Electronics', image: sampleImage('Calculator'), status: 'Reserved' },
+      { seller: users[3]._id, title: 'PE Uniform (Large)', price: 250, category: 'Clothes', image: sampleImage('PE Uniform'), status: 'Sold' },
+      { seller: users[5]._id, title: 'Drawing Tablet', price: 1500, category: 'Electronics', image: sampleImage('Drawing Tablet'), status: 'Available' },
+      { seller: users[6]._id, title: 'Database Systems Book', price: 300, category: 'School Materials', image: sampleImage('DB Book'), status: 'Available' },
+      { seller: users[4]._id, title: 'Homemade Brownies (Box of 6)', price: 120, category: 'Food', image: sampleImage('Brownies'), status: 'Available' },
+      { seller: users[1]._id, title: 'Desk Lamp', price: 200, category: 'Home Items', image: sampleImage('Desk Lamp'), status: 'Available' },
+    ]);
+
+    // Jane asks John about his uniform and Leo asks Mia about her book.
+    console.log('Seeding conversations...');
+    const conversations = await Conversation.create([
+      { item: items[0]._id, buyer: users[2]._id, seller: users[1]._id, lastMessage: 'Okay, see you at the library at 3 PM.', lastMessageAt: new Date(now - 20 * MINUTE) },
+      { item: items[1]._id, buyer: users[5]._id, seller: users[6]._id, lastMessage: 'Can you do 350?', lastMessageAt: new Date(now - 3 * HOUR) },
+    ]);
+
+    await Message.create([
+      { conversation: conversations[0]._id, sender: users[2]._id, content: 'Hi! Is the IT uniform still available?', createdAt: new Date(now - 50 * MINUTE) },
+      { conversation: conversations[0]._id, sender: users[1]._id, content: 'Yes, it is. Medium size, worn only twice.', createdAt: new Date(now - 45 * MINUTE) },
+      { conversation: conversations[0]._id, sender: users[2]._id, content: 'Great, can we meet on campus later?', createdAt: new Date(now - 30 * MINUTE) },
+      { conversation: conversations[0]._id, sender: users[1]._id, content: 'Okay, see you at the library at 3 PM.', createdAt: new Date(now - 20 * MINUTE) },
+      { conversation: conversations[1]._id, sender: users[5]._id, content: 'Hello Ate Mia, is the Data Structures book complete?', createdAt: new Date(now - 4 * HOUR) },
+      { conversation: conversations[1]._id, sender: users[6]._id, content: 'Yes, no missing pages and barely any highlights.', createdAt: new Date(now - 3.5 * HOUR) },
+      { conversation: conversations[1]._id, sender: users[5]._id, content: 'Can you do 350?', createdAt: new Date(now - 3 * HOUR) },
     ]);
 
     console.log('Seeding channels and messages...');

@@ -1,95 +1,79 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Loader from '../../components/common/Loader';
-import api, { getErrorMessage } from '../../lib/axios';
+import Button from '../../components/common/Button';
 import { MarketItemCard } from '../../components/features/MarketItemCard';
 import { ItemForm } from '../../components/features/ItemForm';
+import { MARKET_CATEGORIES } from '../../constants/marketCategories';
+import { useAxiosFetch } from '../../hooks/useAxiosFetch';
+import type { MarketFilters, MarketSearchResponse } from '../../types/market';
+
+const INITIAL_FILTERS: MarketFilters = {
+  q: '',
+  category: '',
+  status: '',
+  minPrice: '',
+  maxPrice: '',
+  sort: 'newest'
+};
 
 export default function MarketplacePage() {
-  const [items, setItems] = useState<any[]>([]);
-  const [stats, setStats] = useState({ count: 0, averagePrice: 0, lowestPrice: 0, highestPrice: 0 });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [filters, setFilters] = useState({
-    q: '',
-    category: '',
-    status: '',
-    minPrice: '',
-    maxPrice: '',
-    sort: 'newest'
-  });
-
-  // A7 Fix: Debounce state para hindi mag-spam request sa server
-  const [debouncedFilters, setDebouncedFilters] = useState(filters);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filters, setFilters] = useState<MarketFilters>(INITIAL_FILTERS);
+  const [debouncedFilters, setDebouncedFilters] = useState<MarketFilters>(INITIAL_FILTERS);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedFilters(filters), 500);
     return () => clearTimeout(timer);
   }, [filters]);
 
-  const fetchItems = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const queryParams = new URLSearchParams();
-      if (debouncedFilters.q) queryParams.append('q', debouncedFilters.q);
-      if (debouncedFilters.category) queryParams.append('category', debouncedFilters.category);
-      if (debouncedFilters.status) queryParams.append('status', debouncedFilters.status);
-      if (debouncedFilters.minPrice) queryParams.append('minPrice', debouncedFilters.minPrice);
-      if (debouncedFilters.maxPrice) queryParams.append('maxPrice', debouncedFilters.maxPrice);
-      if (debouncedFilters.sort) queryParams.append('sort', debouncedFilters.sort);
-
-      const response = await api.get(`/market/search?${queryParams.toString()}`);
-      setItems(response.data.items);
-      setStats({
-        count: response.data.count,
-        averagePrice: response.data.averagePrice,
-        lowestPrice: response.data.lowestPrice,
-        highestPrice: response.data.highestPrice
-      });
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
+  const searchUrl = useMemo(() => {
+    const queryParams = new URLSearchParams();
+    Object.entries(debouncedFilters).forEach(([key, value]) => {
+      if (value) queryParams.append(key, value);
+    });
+    return `/market/search?${queryParams.toString()}`;
   }, [debouncedFilters]);
 
-  useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
+  const { data, loading, error, refetch } = useAxiosFetch<MarketSearchResponse>(searchUrl);
+
+  const items = data?.items ?? [];
+  const count = data?.count ?? 0;
+  const averagePrice = data?.averagePrice ?? 0;
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10">
+    <div className="mx-auto max-w-7xl px-4 py-10 relative">
       <div className="mb-6 flex flex-col justify-between border-b-2 border-nu-gold pb-4 md:flex-row md:items-end">
         <div>
           <h1 className="text-3xl font-bold text-nu-blue">Marketplace</h1>
           <p className="text-gray-600">Buy and sell pre-loved campus essentials.</p>
         </div>
-        {stats.count > 0 && (
-          <div className="mt-4 flex gap-4 text-sm font-medium text-gray-600 md:mt-0">
-            <span>Items: {stats.count}</span>
-            <span>Avg Price: ₱{stats.averagePrice.toFixed(2)}</span>
-          </div>
-        )}
+        <div className="mt-4 flex items-center gap-6 md:mt-0">
+          {count > 0 && (
+            <div className="flex gap-4 text-sm font-medium text-gray-600">
+              <span>Items: {count}</span>
+              <span>Avg Price: ₱{averagePrice.toFixed(2)}</span>
+            </div>
+          )}
+          <Button onClick={() => setIsModalOpen(true)} className="whitespace-nowrap px-6">
+            + Sell an Item
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-        {/* Sidebar Filters */}
         <div className="h-fit rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <h3 className="mb-4 font-bold text-nu-blue">Filters</h3>
-          
+
           <div className="space-y-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">Search</label>
               <input type="text" name="q" value={filters.q} onChange={handleFilterChange} placeholder="Keywords..." className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue" />
             </div>
-            
-            {/* A25 Fix: Sort UI */}
+
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">Sort By</label>
               <select name="sort" value={filters.sort} onChange={handleFilterChange} className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue">
@@ -98,15 +82,14 @@ export default function MarketplacePage() {
                 <option value="priceDesc">Price: High to Low</option>
               </select>
             </div>
-            
+
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">Category</label>
               <select name="category" value={filters.category} onChange={handleFilterChange} className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue">
                 <option value="">All Categories</option>
-                <option value="Books">Books</option>
-                <option value="Uniforms">Uniforms</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Others">Others</option>
+                {MARKET_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
               </select>
             </div>
 
@@ -133,10 +116,7 @@ export default function MarketplacePage() {
           </div>
         </div>
 
-        {/* Results Grid */}
         <div className="md:col-span-3">
-          <ItemForm onItemCreated={fetchItems} />
-          
           {loading ? (
             <Loader label="Searching marketplace..." />
           ) : error ? (
@@ -146,19 +126,45 @@ export default function MarketplacePage() {
               No items match your criteria.
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {items.map((item) => (
-                <MarketItemCard 
-                  key={item._id} 
-                  item={item} 
-                  averagePrice={stats.averagePrice}
-                  onUpdate={fetchItems} 
+                <MarketItemCard
+                  key={item._id}
+                  item={item}
+                  averagePrice={averagePrice}
+                  onUpdate={refetch}
                 />
               ))}
             </div>
           )}
         </div>
       </div>
-    </main>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b bg-gray-50 px-6 py-4">
+              <h2 className="text-xl font-bold text-nu-blue">Create Listing</h2>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                aria-label="Close"
+                className="rounded-full p-2 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6">
+              <ItemForm
+                onItemCreated={() => {
+                  setIsModalOpen(false);
+                  void refetch();
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

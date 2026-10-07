@@ -6,6 +6,7 @@ const Registration = require('../models/Registration');
 const Event = require('../models/Event');
 const MarketItem = require('../models/MarketItem');
 const Message = require('../models/Message');
+const Conversation = require('../models/Conversation');
 const Story = require('../models/Story');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
@@ -99,14 +100,17 @@ exports.deleteUser = asyncHandler(async (req, res) => {
   if (user.role === 'faculty') throw new AppError('Faculty accounts cannot be deleted', 400);
 
   const userId = user._id;
-  const [posts, comments, reactions, registrations, stories] = await Promise.all([
+  const [posts, comments, reactions, registrations, stories, marketItems, conversations] = await Promise.all([
     Post.find({ author: userId }).select('_id media').lean(),
     Comment.find({ author: userId }).select('post'),
     Reaction.find({ user: userId }).select('post'),
     Registration.find({ user: userId, status: 'registered' }).select('event'),
     Story.find({ author: userId }).select('media').lean(),
+    MarketItem.find({ seller: userId }).select('imagePublicId').lean(),
+    Conversation.find({ $or: [{ buyer: userId }, { seller: userId }] }).select('_id').lean(),
   ]);
   const postIds = posts.map((p) => p._id);
+  const conversationIds = conversations.map((c) => c._id);
 
   await Promise.all([
     decrementCounts(Post, comments.map((c) => c.post), 'commentCount'),
@@ -120,12 +124,20 @@ exports.deleteUser = asyncHandler(async (req, res) => {
     Post.deleteMany({ author: userId }),
     Registration.deleteMany({ user: userId }),
     MarketItem.deleteMany({ seller: userId }),
-    Message.deleteMany({ sender: userId }),
+    Message.deleteMany({ $or: [{ sender: userId }, { conversation: { $in: conversationIds } }] }),
+    Conversation.deleteMany({ _id: { $in: conversationIds } }),
     Story.deleteMany({ author: userId }),
   ]);
 
-  // Cloudinary cleanup for the user's post and story files.
-  await deleteMedia([...posts.flatMap((post) => post.media || []), ...stories.map((story) => story.media)]);
+  // Cloudinary cleanup for the user's post, story, and marketplace files.
+  const marketMedia = marketItems
+    .filter((item) => item.imagePublicId)
+    .map((item) => ({ publicId: item.imagePublicId, type: 'image' }));
+  await deleteMedia([
+    ...posts.flatMap((post) => post.media || []),
+    ...stories.map((story) => story.media),
+    ...marketMedia,
+  ]);
 
   await user.deleteOne();
 

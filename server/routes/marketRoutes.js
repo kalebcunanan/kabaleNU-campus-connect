@@ -1,9 +1,10 @@
 // server/routes/marketRoutes.js
 const express = require('express');
 const { protect } = require('../middlewares/auth');
-const { 
-  createItem, getItems, getItem, 
-  updateItem, deleteItem, searchItems, updateItemStatus 
+const { uploadMarketImage } = require('../middlewares/upload');
+const {
+  createItem, getItems, getItem,
+  updateItem, deleteItem, searchItems, updateItemStatus
 } = require('../controllers/marketController');
 
 const router = express.Router();
@@ -15,11 +16,11 @@ router.route('/search').get(searchItems);
 
 router.route('/')
   .get(getItems)
-  .post(createItem);
+  .post(uploadMarketImage, createItem);
 
 router.route('/:id')
   .get(getItem)
-  .put(updateItem)
+  .put(uploadMarketImage, updateItem)
   .delete(deleteItem);
 
 // PROCESSING 4: rule-based status transition

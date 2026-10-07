@@ -31,4 +31,7 @@ const uploadStoryMedia = mediaUpload.single('media');
 // Accepts one optional image in the banner field.
 const uploadEventBanner = imageUpload.single('banner');
 
-module.exports = { uploadAvatar, uploadPostMedia, uploadStoryMedia, uploadEventBanner };
+// Accepts one optional image in the image field.
+const uploadMarketImage = imageUpload.single('image');
+
+module.exports = { uploadAvatar, uploadPostMedia, uploadStoryMedia, uploadEventBanner, uploadMarketImage };

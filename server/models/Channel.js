@@ -20,6 +20,8 @@ const channelSchema = new mongoose.Schema({
     enum: { values: ['Church', 'Orgs', 'Academics', 'Others'], message: 'Category must be Church, Orgs, Academics, or Others' },
   },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: [true, 'Channel creator is required'] },
+  // Only members can read and send messages, and the creator joins automatically.
+  members: { type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], default: [] },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Channel', channelSchema);

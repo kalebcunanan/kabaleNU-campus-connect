@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+const MARKET_CATEGORIES = ['Electronics', 'Clothes', 'School Materials', 'Food', 'Home Items'];
+
 const marketItemSchema = new mongoose.Schema({
   seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: [true, 'Seller is required'] },
   title: {
@@ -16,8 +18,14 @@ const marketItemSchema = new mongoose.Schema({
   category: {
     type: String,
     required: [true, 'Category is required'],
-    enum: { values: ['Books', 'Uniforms', 'Electronics', 'Others'], message: 'Category must be Books, Uniforms, Electronics, or Others' },
+    enum: { values: MARKET_CATEGORIES, message: `Category must be one of: ${MARKET_CATEGORIES.join(', ')}` },
   },
+  image: {
+    type: String,
+    required: [true, 'Item photo is required'],
+  },
+  // The Cloudinary public id is empty for items whose photo was not uploaded through the app.
+  imagePublicId: { type: String },
   status: {
     type: String,
     enum: { values: ['Available', 'Reserved', 'Sold'], message: 'Status must be Available, Reserved, or Sold' },
