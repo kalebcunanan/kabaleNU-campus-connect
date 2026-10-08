@@ -23,6 +23,7 @@ const channelRoutes = require('./routes/channelRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const storyRoutes = require('./routes/storyRoutes');
 const conversationRoutes = require('./routes/conversationRoutes');
+const friendRoutes = require('./routes/friendRoutes');
 
 const app = express();
 
@@ -47,6 +48,7 @@ api.use('/channels', channelRoutes);
 api.use('/messages', messageRoutes);
 api.use('/stories', storyRoutes);
 api.use('/conversations', conversationRoutes);
+api.use('/friends', friendRoutes);
 
 app.use('/api', api);
 // Vercel Services strips the /api prefix before forwarding, so the bare paths must work too.

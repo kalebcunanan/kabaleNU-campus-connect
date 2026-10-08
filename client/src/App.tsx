@@ -11,6 +11,8 @@ import ChannelsPage from './pages/Channels/ChannelsPage';
 import ChannelRoomPage from './pages/Channels/ChannelRoomPage';
 import LeaderboardPage from './pages/Leaderboard/LeaderboardPage';
 import ProfilePage from './pages/Profile/ProfilePage';
+import PublicProfilePage from './pages/Profile/PublicProfilePage';
+import FriendsPage from './pages/Friends/FriendsPage';
 import LandingPage from './pages/Landing/LandingPage';
 import WelcomeOverlay from './components/layout/WelcomeOverlay';
 import { WelcomeProvider } from './context/WelcomeProvider';
@@ -36,7 +38,9 @@ export default function App() {
               <Route path="/channels" element={<ChannelsPage />} />
               <Route path="/channels/:id" element={<ChannelRoomPage />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="/friends" element={<FriendsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/profile/:id" element={<PublicProfilePage />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

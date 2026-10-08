@@ -26,14 +26,25 @@ export function ChatProvider({ children }: ChatProviderProps) {
     setIsInboxOpen(false);
   }, []);
 
-  const startChat = useCallback(async (itemId: string): Promise<void> => {
+  // Asks the server for a conversation and opens it, or shows the server error as a toast.
+  const openFromServer = useCallback(async (path: string, body: Record<string, string>): Promise<void> => {
     try {
-      const { data } = await api.post<Conversation>('/conversations', { itemId });
+      const { data } = await api.post<Conversation>(path, body);
       openConversation(data);
     } catch (error) {
       showToast(getErrorMessage(error), 'error');
     }
   }, [openConversation, showToast]);
+
+  const startChat = useCallback(
+    (itemId: string): Promise<void> => openFromServer('/conversations', { itemId }),
+    [openFromServer],
+  );
+
+  const startDirectChat = useCallback(
+    (friendId: string): Promise<void> => openFromServer('/conversations/direct', { friendId }),
+    [openFromServer],
+  );
 
   const closeChat = useCallback((conversationId: string): void => {
     setWindows((previous) => previous.filter((chatWindow) => chatWindow.conversation._id !== conversationId));
@@ -54,8 +65,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
   }, []);
 
   const value = useMemo<ChatContextValue>(
-    () => ({ windows, isInboxOpen, startChat, openConversation, closeChat, toggleMinimize, toggleInbox }),
-    [windows, isInboxOpen, startChat, openConversation, closeChat, toggleMinimize, toggleInbox],
+    () => ({ windows, isInboxOpen, startChat, startDirectChat, openConversation, closeChat, toggleMinimize, toggleInbox }),
+    [windows, isInboxOpen, startChat, startDirectChat, openConversation, closeChat, toggleMinimize, toggleInbox],
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

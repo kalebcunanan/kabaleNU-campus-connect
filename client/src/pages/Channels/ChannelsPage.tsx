@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import ChannelCard from '../../components/features/ChannelCard';
+import ChannelCardSkeleton from '../../components/features/ChannelCardSkeleton';
 import Button from '../../components/common/Button';
+import FadeIn from '../../components/common/FadeIn';
 import Input from '../../components/common/Input';
-import Loader from '../../components/common/Loader';
 import Select, { type SelectOption } from '../../components/common/Select';
 import { ErrorState } from '../../components/common/ErrorState';
 import { channelSchema, type ChannelFormData } from '../../schemas/channel';
@@ -15,6 +16,8 @@ import type { Channel, ChannelCategory } from '../../types/channel';
 
 const CATEGORY_NAMES: ChannelCategory[] = ['Church', 'Orgs', 'Academics', 'Others'];
 const CATEGORY_OPTIONS: SelectOption[] = CATEGORY_NAMES.map((name) => ({ value: name, label: name }));
+
+const SKELETON_IDS = ['s1', 's2', 's3', 's4', 's5', 's6'] as const;
 
 export default function ChannelsPage() {
   const { data, loading, error, refetch } = useAxiosFetch<Channel[]>('/channels');
@@ -84,7 +87,11 @@ export default function ChannelsPage() {
       )}
 
       {loading && !data ? (
-        <Loader label="Loading channels..." />
+        <div role="status" aria-label="Loading channels" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {SKELETON_IDS.map((id) => (
+            <ChannelCardSkeleton key={id} />
+          ))}
+        </div>
       ) : error && !data ? (
         <ErrorState message={error} onRetry={refetch} />
       ) : channels.length === 0 ? (
@@ -93,8 +100,10 @@ export default function ChannelsPage() {
         <>
           {error && <p role="alert" className="mb-3 text-sm font-medium text-red-500">Unable to refresh channels: {error}</p>}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {channels.map((channel) => (
-              <ChannelCard key={channel._id} channel={channel} />
+            {channels.map((channel, index) => (
+              <FadeIn key={channel._id} index={index}>
+                <ChannelCard channel={channel} />
+              </FadeIn>
             ))}
           </div>
         </>

@@ -12,6 +12,15 @@ import nextStoryIcon from '../../assets/icons/next-story.png';
 const CARD_CLASS = 'relative h-44 w-32 shrink-0 overflow-hidden rounded-2xl border-2 border-nu-gold';
 const SCROLL_STEP = 280;
 const ARROW_MIN_GROUPS = 3;
+const SKELETON_COUNT = 4;
+
+// Mirrors the story card layout with an avatar circle at the top and a name bar at the bottom.
+const StoryCardSkeleton: React.FC = () => (
+  <div aria-hidden="true" className={`${CARD_CLASS} animate-pulse bg-gray-200 motion-reduce:animate-none`}>
+    <span className="absolute left-2 top-2 h-9 w-9 rounded-full bg-gray-300" />
+    <span className="absolute inset-x-2 bottom-2 h-3 rounded bg-gray-300" />
+  </div>
+);
 
 export const StoryBar: React.FC = () => {
   const { user } = useAuth();
@@ -61,9 +70,7 @@ export const StoryBar: React.FC = () => {
             </button>
 
             {loading
-              ? [0, 1, 2].map((placeholder) => (
-                  <div key={placeholder} className={`${CARD_CLASS} animate-pulse bg-gray-200`} />
-                ))
+              ? Array.from({ length: SKELETON_COUNT }, (_, slot) => <StoryCardSkeleton key={slot} />)
               : orderedGroups.map((group, index) => {
                   const preview = group.stories[group.stories.length - 1];
                   const isOwn = group.author._id === user?._id;

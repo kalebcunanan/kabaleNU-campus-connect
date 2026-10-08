@@ -1,14 +1,18 @@
 // server/controllers/conversationController.js
+const mongoose = require('mongoose');
 const Conversation = require('../models/Conversation');
 const MarketItem = require('../models/MarketItem');
 const Message = require('../models/Message');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
+const areFriends = require('../utils/areFriends');
+const { pairKeyOf } = require('../utils/pairKey');
 
 const USER_FIELDS = 'name profilePicture';
 const DEFAULT_MESSAGE_LIMIT = 50;
 const MAX_MESSAGE_LIMIT = 100;
 
+// The item is null for direct friend chats.
 const CONVERSATION_POPULATE = [
   { path: 'item', select: 'title image price status' },
   { path: 'buyer', select: USER_FIELDS },
@@ -44,6 +48,23 @@ exports.startConversation = asyncHandler(async (req, res) => {
   res.status(200).json(conversation);
 });
 
+// Finds or creates the direct conversation between the logged-in user and one of their friends.
+exports.startDirectConversation = asyncHandler(async (req, res) => {
+  const { friendId } = req.body || {};
+  if (!mongoose.isValidObjectId(friendId)) throw new AppError('Invalid ID format', 400);
+  if (req.user._id.equals(friendId)) throw new AppError('You cannot message yourself', 400);
+  if (!(await areFriends(req.user._id, friendId))) throw new AppError('You can only message your friends', 403);
+
+  const conversation = await Conversation.findOneAndUpdate(
+    { pairKey: pairKeyOf(req.user._id, friendId) },
+    { $setOnInsert: { buyer: req.user._id, seller: friendId } },
+    { new: true, upsert: true }
+  );
+
+  await conversation.populate(CONVERSATION_POPULATE);
+  res.status(200).json(conversation);
+});
+
 // Lists the logged-in user's conversations that already have messages, newest first.
 exports.getConversations = asyncHandler(async (req, res) => {
   const conversations = await Conversation.find({
@@ -72,6 +93,12 @@ exports.getConversationMessages = asyncHandler(async (req, res) => {
 
 exports.sendConversationMessage = asyncHandler(async (req, res) => {
   const conversation = await loadConversation(req.params.id, req.user._id);
+
+  // A direct chat stays readable after an unfriend, but new messages are blocked.
+  if (!conversation.item && !(await areFriends(conversation.buyer, conversation.seller))) {
+    throw new AppError('You can only message your friends', 403);
+  }
+
   const { content } = req.body || {};
 
   const message = await Message.create({

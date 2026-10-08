@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import ChannelMessageBubble from './ChannelMessageBubble';
+import ChannelMessageSkeleton from './ChannelMessageSkeleton';
 import Button from '../common/Button';
 import { messageSchema, type MessageFormData } from '../../schemas/channel';
 import { useAuth } from '../../hooks/useAuth';
@@ -62,7 +63,9 @@ export default function ChannelChat({ channelId }: ChannelChatProps) {
         className="flex-1 overflow-y-auto overflow-x-hidden rounded-xl border border-gray-200 bg-white px-4 pb-4 pt-8 shadow-sm"
       >
         {loading && messages.length === 0 ? (
-          <p role="status" className="text-center text-sm text-gray-500">Loading messages...</p>
+          <div role="status" aria-label="Loading messages">
+            <ChannelMessageSkeleton />
+          </div>
         ) : error && messages.length === 0 ? (
           <p role="alert" className="text-center text-sm font-medium text-red-500">{error}</p>
         ) : messages.length === 0 ? (

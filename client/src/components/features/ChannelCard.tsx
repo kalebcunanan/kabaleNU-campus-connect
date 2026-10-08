@@ -13,7 +13,7 @@ export default function ChannelCard({ channel }: ChannelCardProps) {
   return (
     <Link
       to={`/channels/${channel._id}`}
-      className="flex flex-col rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-nu-blue hover:shadow-md"
+      className="flex h-full flex-col rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-nu-blue hover:shadow-md"
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600">{channel.category}</span>

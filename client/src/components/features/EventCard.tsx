@@ -77,7 +77,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, isRegistered, onSta
   };
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border-2 border-nu-blue bg-white shadow-sm">
+    <article className="flex h-full flex-col overflow-hidden rounded-2xl border-2 border-nu-blue bg-white shadow-sm">
       <div className="relative aspect-video bg-nu-blue/10">
         {bannerUrl ? (
           <img src={bannerUrl} alt={`${event.title} banner`} loading="lazy" className="h-full w-full object-cover" />

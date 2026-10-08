@@ -78,7 +78,7 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({ item, averagePri
   };
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md">
       <div className="relative h-48 w-full bg-gray-100">
         {item.image ? (
           <img src={item.image} alt={item.title} loading="lazy" className="h-full w-full object-cover" />

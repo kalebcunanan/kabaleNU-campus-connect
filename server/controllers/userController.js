@@ -8,6 +8,7 @@ const MarketItem = require('../models/MarketItem');
 const Message = require('../models/Message');
 const Conversation = require('../models/Conversation');
 const Story = require('../models/Story');
+const Friendship = require('../models/Friendship');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 const { uploadBuffer, deleteMedia } = require('../utils/cloudinary');
@@ -127,6 +128,7 @@ exports.deleteUser = asyncHandler(async (req, res) => {
     Message.deleteMany({ $or: [{ sender: userId }, { conversation: { $in: conversationIds } }] }),
     Conversation.deleteMany({ _id: { $in: conversationIds } }),
     Story.deleteMany({ author: userId }),
+    Friendship.deleteMany({ $or: [{ requester: userId }, { recipient: userId }] }),
   ]);
 
   // Cloudinary cleanup for the user's post, story, and marketplace files.

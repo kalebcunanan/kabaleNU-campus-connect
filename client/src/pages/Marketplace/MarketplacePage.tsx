@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import Loader from '../../components/common/Loader';
 import Button from '../../components/common/Button';
+import FadeIn from '../../components/common/FadeIn';
 import { MarketItemCard } from '../../components/features/MarketItemCard';
+import MarketItemSkeleton from '../../components/features/MarketItemSkeleton';
+import MarketStats from '../../components/features/MarketStats';
 import { ItemForm } from '../../components/features/ItemForm';
 import { MARKET_CATEGORIES } from '../../constants/marketCategories';
 import { useAxiosFetch } from '../../hooks/useAxiosFetch';
@@ -15,6 +17,8 @@ const INITIAL_FILTERS: MarketFilters = {
   maxPrice: '',
   sort: 'newest'
 };
+
+const SKELETON_IDS = ['s1', 's2', 's3', 's4', 's5', 's6'] as const;
 
 export default function MarketplacePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,13 +55,8 @@ export default function MarketplacePage() {
           <h1 className="text-3xl font-bold text-nu-blue">Marketplace</h1>
           <p className="text-gray-600">Buy and sell pre-loved campus essentials.</p>
         </div>
-        <div className="mt-4 flex items-center gap-6 md:mt-0">
-          {count > 0 && (
-            <div className="flex gap-4 text-sm font-medium text-gray-600">
-              <span>Items: {count}</span>
-              <span>Avg Price: ₱{averagePrice.toFixed(2)}</span>
-            </div>
-          )}
+        <div className="mt-4 flex flex-wrap items-center gap-3 md:mt-0 md:gap-4">
+          {count > 0 && <MarketStats count={count} averagePrice={averagePrice} />}
           <Button onClick={() => setIsModalOpen(true)} className="whitespace-nowrap px-6">
             + Sell an Item
           </Button>
@@ -104,11 +103,11 @@ export default function MarketplacePage() {
             </div>
 
             <div className="flex gap-2">
-              <div>
+              <div className="min-w-0 flex-1">
                 <label className="mb-1 block text-sm font-medium text-gray-700">Min ₱</label>
                 <input type="number" name="minPrice" value={filters.minPrice} onChange={handleFilterChange} min="0" className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <label className="mb-1 block text-sm font-medium text-gray-700">Max ₱</label>
                 <input type="number" name="maxPrice" value={filters.maxPrice} onChange={handleFilterChange} min="0" className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue" />
               </div>
@@ -118,7 +117,11 @@ export default function MarketplacePage() {
 
         <div className="md:col-span-3">
           {loading ? (
-            <Loader label="Searching marketplace..." />
+            <div role="status" aria-label="Loading items" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {SKELETON_IDS.map((id) => (
+                <MarketItemSkeleton key={id} />
+              ))}
+            </div>
           ) : error ? (
             <div className="rounded-lg bg-red-50 p-6 text-center font-medium text-red-500">{error}</div>
           ) : items.length === 0 ? (
@@ -127,13 +130,14 @@ export default function MarketplacePage() {
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {items.map((item) => (
-                <MarketItemCard
-                  key={item._id}
-                  item={item}
-                  averagePrice={averagePrice}
-                  onUpdate={refetch}
-                />
+              {items.map((item, index) => (
+                <FadeIn key={item._id} index={index}>
+                  <MarketItemCard
+                    item={item}
+                    averagePrice={averagePrice}
+                    onUpdate={refetch}
+                  />
+                </FadeIn>
               ))}
             </div>
           )}

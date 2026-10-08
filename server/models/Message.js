@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// A message belongs either to a channel or to a direct conversation about a marketplace item.
+// A message belongs either to a channel or to a direct conversation (marketplace or friends).
 const messageSchema = new mongoose.Schema({
   channel: {
     type: mongoose.Schema.Types.ObjectId,

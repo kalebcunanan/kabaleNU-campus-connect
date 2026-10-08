@@ -30,7 +30,7 @@ export default function ChatInbox({ onSelect }: ChatInboxProps) {
         <p className="p-4 text-sm text-red-500">{error}</p>
       ) : conversations.length === 0 ? (
         <p className="p-4 text-sm text-gray-500">
-          No conversations yet. Tap Message Seller on a marketplace item to start one.
+          No conversations yet. Message a friend from their profile or tap Message Seller on a marketplace item.
         </p>
       ) : (
         <ul>
@@ -46,7 +46,9 @@ export default function ChatInbox({ onSelect }: ChatInboxProps) {
                   <Avatar src={other.profilePicture} name={other.name} className="h-9 w-9" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-bold text-gray-800">{other.name}</span>
-                    <span className="block truncate text-xs text-nu-blue">{conversation.item.title}</span>
+                    {conversation.item && (
+                      <span className="block truncate text-xs text-nu-blue">{conversation.item.title}</span>
+                    )}
                     {conversation.lastMessage && (
                       <span className="block truncate text-xs text-gray-500">{conversation.lastMessage}</span>
                     )}

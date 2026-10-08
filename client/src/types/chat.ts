@@ -16,7 +16,7 @@ export interface ConversationItem {
 
 export interface Conversation {
   _id: string;
-  item: ConversationItem;
+  item: ConversationItem | null;
   buyer: ChatUser;
   seller: ChatUser;
   lastMessage?: string;
@@ -39,6 +39,7 @@ export interface ChatContextValue {
   windows: ChatWindowState[];
   isInboxOpen: boolean;
   startChat: (itemId: string) => Promise<void>;
+  startDirectChat: (friendId: string) => Promise<void>;
   openConversation: (conversation: Conversation) => void;
   closeChat: (conversationId: string) => void;
   toggleMinimize: (conversationId: string) => void;

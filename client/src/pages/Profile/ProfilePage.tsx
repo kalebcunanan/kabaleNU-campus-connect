@@ -3,14 +3,17 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Button from '../../components/common/Button';
 import { Avatar } from '../../components/common/Avatar';
+import MyPosts from '../../components/features/MyPosts';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import api, { getErrorMessage } from '../../lib/axios';
 import { avatarSchema } from '../../schemas/profile';
 import type { AvatarFormValues } from '../../schemas/profile';
 
+const AVATAR_CLASS = 'h-36 w-36 shadow-md ring-4 ring-white';
+
 export default function ProfilePage() {
-  const { user, logout, refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { showToast } = useToast();
 
   const {
@@ -54,82 +57,82 @@ export default function ProfilePage() {
   if (!user) return null;
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10">
-      <div className="rounded-2xl border-t-4 border-nu-gold bg-white p-8 shadow-lg">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-nu-blue">My Profile</h1>
-          <span className="rounded-full bg-nu-blue px-3 py-1 text-xs font-bold uppercase tracking-widest text-white">
-            {user.role}
-          </span>
-        </div>
+    <div className="mx-auto max-w-2xl pt-20">
+      <section className="relative animate-rise-in rounded-2xl border-t-4 border-nu-gold bg-white px-6 pb-8 pt-24 text-center shadow-lg motion-reduce:animate-none">
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="relative">
+              {previewUrl ? (
+                <img
+                  src={previewUrl}
+                  alt="New profile preview"
+                  className={`${AVATAR_CLASS} rounded-full border border-nu-blue/20 object-cover`}
+                />
+              ) : (
+                <Avatar src={user.profilePicture} name={user.name} className={AVATAR_CLASS} />
+              )}
 
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="mb-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-6">
-          {previewUrl ? (
-            <img src={previewUrl} alt="New profile preview" className="h-24 w-24 shrink-0 rounded-full border border-nu-blue/20 object-cover" />
-          ) : (
-            <Avatar src={user.profilePicture} name={user.name} className="h-24 w-24" />
-          )}
-          <div className="w-full min-w-0">
-            <label htmlFor="picture" className="mb-1 block text-sm font-medium text-gray-700">
-              Change profile picture
-            </label>
-            <input
-              id="picture"
-              type="file"
-              accept="image/*"
-              className="block w-full text-sm text-gray-700 file:mr-3 file:rounded-lg file:border-0 file:bg-nu-gold file:px-3 file:py-2 file:text-sm file:font-semibold"
-              {...register('picture')}
-            />
-            {errors.picture && (
-              <p role="alert" className="mt-1 text-sm text-red-700">
-                {errors.picture.message}
-              </p>
-            )}
-            {errors.root?.server && (
-              <p role="alert" className="mt-1 text-sm text-red-700">
-                {errors.root.server.message}
-              </p>
-            )}
-            {selectedFile && (
-              <div className="mt-3 flex gap-2">
-                <Button type="submit" variant="gold" size="sm" isLoading={isSubmitting}>
-                  Save photo
-                </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => reset()}>
-                  Cancel
-                </Button>
-              </div>
-            )}
+              <input id="picture" type="file" accept="image/*" className="peer sr-only" {...register('picture')} />
+              <label
+                htmlFor="picture"
+                aria-label="Change profile picture"
+                className="absolute bottom-1 right-1 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white text-nu-blue shadow-md ring-1 ring-nu-blue/20 transition-transform hover:scale-105 peer-focus-visible:ring-2 peer-focus-visible:ring-nu-gold"
+              >
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" fillRule="evenodd" className="h-5 w-5">
+                  <path d="M9 3 7.17 5H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.17L15 3H9zm3 15a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+                </svg>
+              </label>
+            </div>
           </div>
-        </form>
 
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-500">Full Name</label>
-            <p className="text-lg font-bold text-gray-900">{user.name}</p>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-500">Email Address</label>
-            <p className="text-lg font-bold text-gray-900">{user.email}</p>
-          </div>
-          {user.program && (
-            <div>
-              <label className="text-sm font-medium text-gray-500">Academic Program</label>
-              <p className="text-lg font-bold text-gray-900">{user.program}</p>
+          {selectedFile && (
+            <div className="mb-4 flex justify-center gap-2">
+              <Button type="submit" variant="gold" size="sm" isLoading={isSubmitting}>
+                Save photo
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => reset()}>
+                Cancel
+              </Button>
             </div>
           )}
-          <div>
-            <label className="text-sm font-medium text-gray-500">Total Bulldog Score</label>
-            <p className="text-2xl font-black text-nu-gold">{user.bulldogScore} pts</p>
-          </div>
+
+          {errors.picture && (
+            <p role="alert" className="mb-3 text-sm text-red-700">
+              {errors.picture.message}
+            </p>
+          )}
+          {errors.root?.server && (
+            <p role="alert" className="mb-3 text-sm text-red-700">
+              {errors.root.server.message}
+            </p>
+          )}
+        </form>
+
+        <h1 className="break-words text-3xl font-bold text-nu-blue">{user.name}</h1>
+        <p className="mt-1 capitalize text-gray-600">
+          {user.role}
+          {user.program ? `, ${user.program}` : ''}
+        </p>
+        <p className="break-words text-gray-500">{user.email}</p>
+
+        <div className="mt-6">
+          <p className="text-sm text-gray-500">Total Bulldog Score</p>
+          <p className="text-3xl font-extrabold text-nu-gold">{user.bulldogScore} pts</p>
+        </div>
+      </section>
+
+      <section aria-labelledby="my-posts-heading">
+        <div className="my-8 flex items-center gap-4">
+          <span aria-hidden="true" className="h-px flex-1 bg-gray-300" />
+          <h2 id="my-posts-heading" className="text-lg font-bold text-nu-blue">
+            My Posts
+          </h2>
+          <span aria-hidden="true" className="h-px flex-1 bg-gray-300" />
         </div>
 
-        <div className="mt-8 border-t border-gray-100 pt-6">
-          <Button variant="outline" onClick={() => void logout().catch(() => undefined)} className="w-full sm:w-auto">
-            Log out from Campus Connect
-          </Button>
-        </div>
-      </div>
-    </main>
+        {/* Remounting on a new avatar reloads the posts so their author pictures stay current. */}
+        <MyPosts key={user.profilePicture ?? ''} userId={user._id} />
+      </section>
+    </div>
   );
 }

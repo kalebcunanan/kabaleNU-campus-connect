@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Post = require('../models/Post');
 const Reaction = require('../models/Reaction');
 const Comment = require('../models/Comment');
@@ -5,6 +6,7 @@ const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 const calculateHotness = require('../utils/hotness');
+const areFriends = require('../utils/areFriends');
 const { uploadMedia, deleteMedia } = require('../utils/cloudinary');
 
 const AUTHOR_FIELDS = 'name role program profilePicture';
@@ -39,7 +41,20 @@ exports.createPost = asyncHandler(async (req, res) => {
 });
 
 exports.getPosts = asyncHandler(async (req, res) => {
-  const posts = await Post.find({ status: 'active' })
+  // An optional author query narrows the list to one user and is limited to friends.
+  const { author } = req.query;
+  const filter = { status: 'active' };
+  if (typeof author === 'string' && author) {
+    if (!mongoose.isValidObjectId(author)) throw new AppError('Invalid ID format', 400);
+
+    // A profile feed is private: only the owner, their friends, and faculty may read it.
+    const canView = req.user._id.equals(author) || req.user.role === 'faculty' || await areFriends(req.user._id, author);
+    if (!canView) throw new AppError('Only friends can see these posts', 403);
+
+    filter.author = author;
+  }
+
+  const posts = await Post.find(filter)
     .sort({ createdAt: -1 })
     .populate('author', AUTHOR_FIELDS)
     .lean();

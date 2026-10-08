@@ -60,7 +60,7 @@ export default function ChatWindow({ conversation, isMinimized, onToggleMinimize
           <Avatar src={other.profilePicture} name={other.name} className="h-8 w-8" />
           <span className="min-w-0">
             <span className="block truncate text-sm font-bold text-gray-900">{other.name}</span>
-            <span className="block truncate text-xs text-nu-blue">{conversation.item.title}</span>
+            {conversation.item && <span className="block truncate text-xs text-nu-blue">{conversation.item.title}</span>}
           </span>
         </button>
         <button

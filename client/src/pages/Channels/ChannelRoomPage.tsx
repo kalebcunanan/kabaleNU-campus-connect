@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import ChannelChat from '../../components/features/ChannelChat';
+import ChannelRoomSkeleton from '../../components/features/ChannelRoomSkeleton';
 import { Avatar } from '../../components/common/Avatar';
 import Button from '../../components/common/Button';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { ErrorState } from '../../components/common/ErrorState';
-import Loader from '../../components/common/Loader';
 import { useAuth } from '../../hooks/useAuth';
 import { useAxiosFetch } from '../../hooks/useAxiosFetch';
 import { useToast } from '../../hooks/useToast';
@@ -70,7 +70,7 @@ export default function ChannelRoomPage() {
     }
   };
 
-  if (loading && !channel) return <Loader label="Loading channel..." />;
+  if (loading && !channel) return <ChannelRoomSkeleton />;
 
   if (!channel) {
     return (
@@ -86,7 +86,7 @@ export default function ChannelRoomPage() {
   const confirmCopy = pendingAction ? CONFIRM_COPY[pendingAction] : null;
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-8rem)] max-w-4xl flex-col">
+    <div className="mx-auto flex h-[calc(100dvh-8rem)] max-w-4xl animate-rise-in flex-col motion-reduce:animate-none">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b-2 border-nu-gold pb-4">
         <div className="min-w-0">
           <Link to="/channels" className="text-sm font-bold text-gray-500 hover:text-nu-blue">Back to Channels</Link>

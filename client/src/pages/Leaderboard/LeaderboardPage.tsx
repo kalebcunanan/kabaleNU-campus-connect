@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import Loader from '../../components/common/Loader';
 import { Avatar } from '../../components/common/Avatar';
+import FadeIn from '../../components/common/FadeIn';
+import LeaderboardSkeleton from '../../components/features/LeaderboardSkeleton';
 import { useAuth } from '../../hooks/useAuth';
 import api, { getErrorMessage } from '../../lib/axios';
 import type { LeaderboardEntry } from '../../types/leaderboard';
@@ -43,7 +44,9 @@ export default function LeaderboardPage() {
       </div>
 
       {loading ? (
-        <Loader label="Fetching the top students..." />
+        <div role="status" aria-label="Loading leaderboard">
+          <LeaderboardSkeleton />
+        </div>
       ) : error ? (
         <div role="alert" className="rounded-lg bg-red-50 p-6 text-center font-medium text-red-500">
           {error}
@@ -51,41 +54,42 @@ export default function LeaderboardPage() {
       ) : leaders.length === 0 ? (
         <div className="p-12 text-center text-gray-500">No scores yet. Start engaging to top the board!</div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          {leaders.map((student) => {
+        <div className="divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          {leaders.map((student, index) => {
             const isCurrentUser = student._id === user?._id;
             return (
-              <div
-                key={student._id}
-                className={`flex items-center justify-between border-b border-gray-100 p-4 last:border-0 ${
-                  isCurrentUser ? 'bg-nu-gold/10' : ''
-                }`}
-              >
-                <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-                  <span
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-bold ${
-                      RANK_STYLES[student.rank] ?? DEFAULT_RANK_STYLE
-                    }`}
-                  >
-                    {student.rank}
-                  </span>
-                  <Avatar src={student.profilePicture} name={student.name} className="h-10 w-10" />
-                  <div className="min-w-0">
-                    <h3 className="truncate font-bold text-nu-blue">
-                      {student.name}
-                      {isCurrentUser && <span className="ml-2 text-xs font-semibold text-nu-gold">You</span>}
-                    </h3>
-                    <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
-                      {student.role}
-                      {student.program ? ` • ${student.program}` : ''}
-                    </p>
+              <FadeIn key={student._id} index={index}>
+                <div
+                  className={`flex items-center justify-between p-4 ${
+                    isCurrentUser ? 'bg-nu-gold/10' : ''
+                  }`}
+                >
+                  <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                    <span
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-bold ${
+                        RANK_STYLES[student.rank] ?? DEFAULT_RANK_STYLE
+                      }`}
+                    >
+                      {student.rank}
+                    </span>
+                    <Avatar src={student.profilePicture} name={student.name} className="h-10 w-10" />
+                    <div className="min-w-0">
+                      <h3 className="truncate font-bold text-nu-blue">
+                        {student.name}
+                        {isCurrentUser && <span className="ml-2 text-xs font-semibold text-nu-gold">You</span>}
+                      </h3>
+                      <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
+                        {student.role}
+                        {student.program ? ` • ${student.program}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <span className="text-xl font-black text-nu-gold">{student.bulldogScore}</span>
+                    <span className="ml-1 text-xs text-gray-500">pts</span>
                   </div>
                 </div>
-                <div className="shrink-0 text-right">
-                  <span className="text-xl font-black text-nu-gold">{student.bulldogScore}</span>
-                  <span className="ml-1 text-xs text-gray-500">pts</span>
-                </div>
-              </div>
+              </FadeIn>
             );
           })}
         </div>

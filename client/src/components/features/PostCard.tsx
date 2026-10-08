@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { Avatar } from '../common/Avatar';
 import { MediaGrid } from './MediaGrid';
@@ -89,10 +90,14 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onDeleted }) => {
       {/* HEADER: Profile, Info, and 3-Dot Menu */}
       <div className="mb-3 flex items-start justify-between">
         <div className="flex gap-3 min-w-0 flex-1">
-          <Avatar src={post.author.profilePicture} name={post.author.name} className="h-10 w-10" />
+          <Link to={`/profile/${post.author._id}`} aria-label={`View ${post.author.name}'s profile`} className="shrink-0">
+            <Avatar src={post.author.profilePicture} name={post.author.name} className="h-10 w-10" />
+          </Link>
           <div className="flex flex-col min-w-0">
             <h4 className="truncate font-bold text-nu-blue">
-              {post.author.name}
+              <Link to={`/profile/${post.author._id}`} className="hover:underline">
+                {post.author.name}
+              </Link>
             </h4>
             <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500 mt-0.5">
               {post.author.program && (

@@ -8,7 +8,7 @@ interface AvatarProps {
   className?: string;
 }
 
-// Shows the uploaded picture and falls back to the default profile icon when there is none.
+// Shows the uploaded picture and falls back to a round badge with the default profile icon when there is none.
 export const Avatar: React.FC<AvatarProps> = ({ src, name, className = 'h-10 w-10' }) =>
   src ? (
     <img
@@ -18,5 +18,11 @@ export const Avatar: React.FC<AvatarProps> = ({ src, name, className = 'h-10 w-1
       className={`shrink-0 rounded-full border border-nu-blue/20 object-cover ${className}`}
     />
   ) : (
-    <NavIcon src={profileIcon} className={`shrink-0 text-nu-blue ${className}`} />
+    <span
+      role="img"
+      aria-label={name}
+      className={`flex shrink-0 items-center justify-center rounded-full border border-nu-blue/20 bg-nu-blue/10 ${className}`}
+    >
+      <NavIcon src={profileIcon} className="h-3/5 w-3/5 text-nu-blue" />
+    </span>
   );

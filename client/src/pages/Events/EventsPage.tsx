@@ -2,12 +2,15 @@ import { useState } from 'react';
 import Button from '../../components/common/Button';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ErrorState } from '../../components/common/ErrorState';
-import Loader from '../../components/common/Loader';
+import FadeIn from '../../components/common/FadeIn';
 import { EventCard } from '../../components/features/EventCard';
+import EventCardSkeleton from '../../components/features/EventCardSkeleton';
 import { EventForm } from '../../components/features/EventForm';
 import { useAuth } from '../../hooks/useAuth';
 import { useAxiosFetch } from '../../hooks/useAxiosFetch';
 import type { CampusEvent, MyRegistration } from '../../types/event';
+
+const SKELETON_IDS = ['s1', 's2', 's3', 's4', 's5', 's6'] as const;
 
 export default function EventsPage() {
   const { user } = useAuth();
@@ -42,20 +45,25 @@ export default function EventsPage() {
       </div>
 
       {loading ? (
-        <Loader label="Loading events..." />
+        <div role="status" aria-label="Loading events" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {SKELETON_IDS.map((id) => (
+            <EventCardSkeleton key={id} />
+          ))}
+        </div>
       ) : error ? (
         <ErrorState message={error} onRetry={handleRefresh} />
       ) : !events || events.length === 0 ? (
         <EmptyState message={isFaculty ? 'No events yet. Create the first one.' : 'No events yet. Check back soon.'} />
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {events.map((event) => (
-            <EventCard
-              key={event._id}
-              event={event}
-              isRegistered={registeredEventIds.has(event._id)}
-              onStatusChange={handleRefresh}
-            />
+          {events.map((event, index) => (
+            <FadeIn key={event._id} index={index}>
+              <EventCard
+                event={event}
+                isRegistered={registeredEventIds.has(event._id)}
+                onStatusChange={handleRefresh}
+              />
+            </FadeIn>
           ))}
         </div>
       )}
