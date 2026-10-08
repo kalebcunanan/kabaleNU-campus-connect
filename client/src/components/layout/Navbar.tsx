@@ -46,7 +46,7 @@ const isItemActive = (item: NavItem, pathname: string): boolean =>
   item.end ? pathname === item.to : pathname.startsWith(item.to);
 
 export const Navbar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const { pathname } = useLocation();
   const entrance = useWelcomeEntrance('animate-slide-down');
 
@@ -55,6 +55,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <nav
+      aria-label="Main navigation"
       className={`relative z-40 shrink-0 border-b-2 border-nu-gold bg-nu-blue shadow-md ${entrance.className}`}
       style={entrance.style}
     >
@@ -112,6 +113,9 @@ export const Navbar: React.FC = () => {
               </button>
             </div>
           </>
+        ) : isLoading ? (
+          // While the session restores, show nothing so Login and Register do not flash.
+          <span aria-hidden="true" />
         ) : (
           <>
             <span className="hidden sm:block" />

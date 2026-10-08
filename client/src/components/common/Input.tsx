@@ -8,7 +8,7 @@ interface InputProps extends ComponentPropsWithRef<'input'> {
   error?: string;
 }
 
-export default function Input({ label, error, id, ...rest }: InputProps) {
+export default function Input({ label, error, id, className = '', ...rest }: InputProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
 
@@ -18,7 +18,7 @@ export default function Input({ label, error, id, ...rest }: InputProps) {
         id={inputId}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${inputId}-error` : undefined}
-        className={getFieldClasses(Boolean(error))}
+        className={`${getFieldClasses(Boolean(error))} ${className}`}
         {...rest}
       />
     </FormField>

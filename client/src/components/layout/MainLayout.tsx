@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
+import type { JSX } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import ChatDock from '../features/ChatDock';
 import { ChatProvider } from '../../context/ChatContext';
 
-export default function MainLayout() {
+export default function MainLayout(): JSX.Element {
   const { pathname } = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
 

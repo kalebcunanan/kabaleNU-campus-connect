@@ -1,9 +1,10 @@
+import type { JSX } from 'react';
 import { useFriendRequestCount } from '../../hooks/useFriendRequestCount';
 
 const MAX_DISPLAYED_COUNT = 9;
 
 // A red count badge for the Friends nav icon that stays hidden while no friend requests are pending.
-export default function FriendRequestBadge() {
+export default function FriendRequestBadge(): JSX.Element | null {
   const count = useFriendRequestCount();
 
   if (count === 0) return null;

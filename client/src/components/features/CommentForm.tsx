@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import type { JSX } from 'react';
 import { Avatar } from '../common/Avatar';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
@@ -12,7 +13,7 @@ interface CommentFormProps {
   onCommentAdded: () => void;
 }
 
-export default function CommentForm({ postId, onCommentAdded }: CommentFormProps) {
+export default function CommentForm({ postId, onCommentAdded }: CommentFormProps): JSX.Element {
   const { user } = useAuth();
   const { showToast } = useToast();
   const {
@@ -26,7 +27,7 @@ export default function CommentForm({ postId, onCommentAdded }: CommentFormProps
     defaultValues: { content: '' },
   });
 
-  const onSubmit = async (values: CommentFormData) => {
+  const onSubmit = async (values: CommentFormData): Promise<void> => {
     try {
       await api.post(`/posts/${postId}/comments`, values);
       reset();
@@ -37,35 +38,38 @@ export default function CommentForm({ postId, onCommentAdded }: CommentFormProps
     }
   };
 
-  return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      noValidate
-      className="flex items-center gap-2 border-t border-gray-200 p-3 bg-white"
-    >
-      <Avatar src={user?.profilePicture} name={user?.name ?? 'You'} className="h-8 w-8" />
+  // The field error from Zod takes priority over a server error.
+  const errorMessage: string | undefined = errors.content?.message ?? errors.root?.server?.message;
 
-      <div className="flex-1 bg-gray-100 rounded-full px-4 py-2 flex items-center border border-transparent focus-within:border-nu-blue/30 transition-colors">
-        <input
-          type="text"
-          placeholder="Write a comment..."
-          autoComplete="off"
-          className="bg-transparent outline-none w-full text-sm text-gray-800"
-          {...register('content')}
-        />
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="text-nu-blue font-bold text-sm ml-2 disabled:opacity-50 hover:text-nu-blue/80"
-        >
-          Post
-        </button>
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="border-t border-gray-200 bg-white p-3">
+      <div className="flex items-center gap-2">
+        <Avatar src={user?.profilePicture} name={user?.name ?? 'You'} className="h-8 w-8" />
+
+        <div className="flex flex-1 items-center rounded-full border border-transparent bg-gray-100 px-4 py-2 transition-colors focus-within:border-nu-blue/30">
+          <input
+            type="text"
+            placeholder="Write a comment..."
+            aria-label="Write a comment"
+            aria-invalid={errors.content ? true : undefined}
+            autoComplete="off"
+            className="w-full bg-transparent text-sm text-gray-800 outline-none"
+            {...register('content')}
+          />
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="ml-2 text-sm font-bold text-nu-blue hover:text-nu-blue/80 disabled:opacity-50"
+          >
+            Post
+          </button>
+        </div>
       </div>
 
-      {errors.root?.server && (
-        <span role="alert" className="absolute bottom-14 left-4 text-xs text-red-600">
-          {errors.root.server.message}
-        </span>
+      {errorMessage && (
+        <p role="alert" className="mt-1 pl-10 text-xs text-red-600">
+          {errorMessage}
+        </p>
       )}
     </form>
   );

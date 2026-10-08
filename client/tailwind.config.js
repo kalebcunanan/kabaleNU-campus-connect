@@ -6,6 +6,7 @@ export default {
       colors: {
         'nu-blue': '#2455a6',
         'nu-gold': '#ffd42a',
+        'nu-gold-dark': '#8a6d00',
       },
       fontFamily: {
         sans: ['"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],

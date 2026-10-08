@@ -11,11 +11,11 @@ export interface SelectOption {
 interface SelectProps extends ComponentPropsWithRef<'select'> {
   label: string;
   options: SelectOption[];
-  placeholder: string;
+  placeholder?: string;
   error?: string;
 }
 
-export default function Select({ label, options, placeholder, error, id, ...rest }: SelectProps) {
+export default function Select({ label, options, placeholder, error, id, className = '', ...rest }: SelectProps) {
   const generatedId = useId();
   const selectId = id ?? generatedId;
 
@@ -25,10 +25,10 @@ export default function Select({ label, options, placeholder, error, id, ...rest
         id={selectId}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${selectId}-error` : undefined}
-        className={getFieldClasses(Boolean(error))}
+        className={`${getFieldClasses(Boolean(error))} ${className}`}
         {...rest}
       >
-        <option value="">{placeholder}</option>
+        {placeholder !== undefined && <option value="">{placeholder}</option>}
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}

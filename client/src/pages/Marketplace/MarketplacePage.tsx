@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { JSX } from 'react';
 import Button from '../../components/common/Button';
+import { EmptyState } from '../../components/common/EmptyState';
+import { ErrorState } from '../../components/common/ErrorState';
 import FadeIn from '../../components/common/FadeIn';
+import Input from '../../components/common/Input';
+import Select, { type SelectOption } from '../../components/common/Select';
 import { MarketItemCard } from '../../components/features/MarketItemCard';
 import MarketItemSkeleton from '../../components/features/MarketItemSkeleton';
 import MarketStats from '../../components/features/MarketStats';
@@ -20,7 +25,17 @@ const INITIAL_FILTERS: MarketFilters = {
 
 const SKELETON_IDS = ['s1', 's2', 's3', 's4', 's5', 's6'] as const;
 
-export default function MarketplacePage() {
+const SORT_OPTIONS: SelectOption[] = [
+  { value: 'newest', label: 'Newest First' },
+  { value: 'priceAsc', label: 'Price: Low to High' },
+  { value: 'priceDesc', label: 'Price: High to Low' },
+];
+
+const CATEGORY_OPTIONS: SelectOption[] = MARKET_CATEGORIES.map((category) => ({ value: category, label: category }));
+
+const STATUS_OPTIONS: SelectOption[] = ['Available', 'Reserved', 'Sold'].map((status) => ({ value: status, label: status }));
+
+export default function MarketplacePage(): JSX.Element {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filters, setFilters] = useState<MarketFilters>(INITIAL_FILTERS);
   const [debouncedFilters, setDebouncedFilters] = useState<MarketFilters>(INITIAL_FILTERS);
@@ -44,7 +59,7 @@ export default function MarketplacePage() {
   const count = data?.count ?? 0;
   const averagePrice = data?.averagePrice ?? 0;
 
-  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
@@ -68,48 +83,34 @@ export default function MarketplacePage() {
           <h3 className="mb-4 font-bold text-nu-blue">Filters</h3>
 
           <div className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Search</label>
-              <input type="text" name="q" value={filters.q} onChange={handleFilterChange} placeholder="Keywords..." className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue" />
-            </div>
+            <Input label="Search" type="text" name="q" value={filters.q} onChange={handleFilterChange} placeholder="Keywords..." />
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Sort By</label>
-              <select name="sort" value={filters.sort} onChange={handleFilterChange} className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue">
-                <option value="newest">Newest First</option>
-                <option value="priceAsc">Price: Low to High</option>
-                <option value="priceDesc">Price: High to Low</option>
-              </select>
-            </div>
+            <Select label="Sort By" name="sort" value={filters.sort} onChange={handleFilterChange} options={SORT_OPTIONS} />
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Category</label>
-              <select name="category" value={filters.category} onChange={handleFilterChange} className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue">
-                <option value="">All Categories</option>
-                {MARKET_CATEGORIES.map((category) => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-            </div>
+            <Select
+              label="Category"
+              name="category"
+              value={filters.category}
+              onChange={handleFilterChange}
+              options={CATEGORY_OPTIONS}
+              placeholder="All Categories"
+            />
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Status</label>
-              <select name="status" value={filters.status} onChange={handleFilterChange} className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue">
-                <option value="">All Status</option>
-                <option value="Available">Available</option>
-                <option value="Reserved">Reserved</option>
-                <option value="Sold">Sold</option>
-              </select>
-            </div>
+            <Select
+              label="Status"
+              name="status"
+              value={filters.status}
+              onChange={handleFilterChange}
+              options={STATUS_OPTIONS}
+              placeholder="All Status"
+            />
 
             <div className="flex gap-2">
               <div className="min-w-0 flex-1">
-                <label className="mb-1 block text-sm font-medium text-gray-700">Min ₱</label>
-                <input type="number" name="minPrice" value={filters.minPrice} onChange={handleFilterChange} min="0" className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue" />
+                <Input label="Min ₱" type="number" name="minPrice" value={filters.minPrice} onChange={handleFilterChange} min="0" />
               </div>
               <div className="min-w-0 flex-1">
-                <label className="mb-1 block text-sm font-medium text-gray-700">Max ₱</label>
-                <input type="number" name="maxPrice" value={filters.maxPrice} onChange={handleFilterChange} min="0" className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-nu-blue focus:outline-none focus:ring-1 focus:ring-nu-blue" />
+                <Input label="Max ₱" type="number" name="maxPrice" value={filters.maxPrice} onChange={handleFilterChange} min="0" />
               </div>
             </div>
           </div>
@@ -123,11 +124,9 @@ export default function MarketplacePage() {
               ))}
             </div>
           ) : error ? (
-            <div className="rounded-lg bg-red-50 p-6 text-center font-medium text-red-500">{error}</div>
+            <ErrorState message={error} onRetry={() => void refetch()} />
           ) : items.length === 0 ? (
-            <div className="rounded-lg border-2 border-dashed border-gray-200 p-12 text-center text-gray-500">
-              No items match your criteria.
-            </div>
+            <EmptyState message="No items match your criteria." />
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {items.map((item, index) => (
@@ -146,7 +145,12 @@ export default function MarketplacePage() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Create listing"
+            className="relative max-h-full w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl"
+          >
             <div className="flex items-center justify-between border-b bg-gray-50 px-6 py-4">
               <h2 className="text-xl font-bold text-nu-blue">Create Listing</h2>
               <button

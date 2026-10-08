@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../common/Button';
+import { ConfirmDialog } from '../common/ConfirmDialog';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../hooks/useToast';
 import api, { getErrorMessage } from '../../lib/axios';
 import { formatEventRange, getOrganizerId } from '../../lib/eventUtils';
 import type { CampusEvent } from '../../types/event';
@@ -14,9 +16,11 @@ interface EventCardProps {
 
 export const EventCard: React.FC<EventCardProps> = ({ event, isRegistered, onStatusChange }) => {
   const { user, refreshUser } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCancelOpen, setIsCancelOpen] = useState<boolean>(false);
 
   const isFaculty = user?.role === 'faculty';
   const isOwner = user !== null && getOrganizerId(event) === user._id;
@@ -26,11 +30,12 @@ export const EventCard: React.FC<EventCardProps> = ({ event, isRegistered, onSta
   const bannerUrl = event.banner?.url;
 
   // Registering or cancelling changes the score, so the user is reloaded after either action.
-  const runAction = async (request: () => Promise<unknown>): Promise<void> => {
+  const runAction = async (request: () => Promise<unknown>, successMessage: string): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
       await request();
+      showToast(successMessage);
       onStatusChange();
       void refreshUser();
     } catch (err) {
@@ -38,6 +43,12 @@ export const EventCard: React.FC<EventCardProps> = ({ event, isRegistered, onSta
     } finally {
       setLoading(false);
     }
+  };
+
+  // The dialog closes first because its Confirm button has no pending state.
+  const handleConfirmCancel = (): void => {
+    setIsCancelOpen(false);
+    void runAction(() => api.delete(`/events/${event._id}/register`), 'Registration cancelled (-10 Bulldog Score)');
   };
 
   const renderAction = (): React.ReactNode => {
@@ -58,7 +69,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, isRegistered, onSta
           variant="outline"
           className="w-full rounded-full"
           disabled={loading || isEnded}
-          onClick={() => void runAction(() => api.delete(`/events/${event._id}/register`))}
+          onClick={() => setIsCancelOpen(true)}
         >
           {loading ? 'Cancelling...' : 'Cancel registration'}
         </Button>
@@ -69,7 +80,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, isRegistered, onSta
         variant="gold"
         className="w-full rounded-full"
         disabled={loading || isFull || isEnded}
-        onClick={() => void runAction(() => api.post(`/events/${event._id}/register`))}
+        onClick={() => void runAction(() => api.post(`/events/${event._id}/register`), 'You are registered! +10 Bulldog Score')}
       >
         {loading ? 'Processing...' : isEnded ? 'Event ended' : isFull ? 'Event full' : 'Register (+10 Points)'}
       </Button>
@@ -109,6 +120,14 @@ export const EventCard: React.FC<EventCardProps> = ({ event, isRegistered, onSta
           </p>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={isCancelOpen}
+        title="Cancel registration?"
+        message={`You will lose 10 Bulldog Score and give up your slot in "${event.title}".`}
+        onConfirm={handleConfirmCancel}
+        onCancel={() => setIsCancelOpen(false)}
+      />
     </article>
   );
 };

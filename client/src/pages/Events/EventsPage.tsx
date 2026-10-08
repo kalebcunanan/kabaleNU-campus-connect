@@ -15,7 +15,7 @@ const SKELETON_IDS = ['s1', 's2', 's3', 's4', 's5', 's6'] as const;
 export default function EventsPage() {
   const { user } = useAuth();
   const { data: events, loading, error, refetch: refetchEvents } = useAxiosFetch<CampusEvent[]>('/events');
-  const { data: registrations, refetch: refetchRegistrations } = useAxiosFetch<MyRegistration[]>('/users/me/registrations');
+  const { data: registrations, error: registrationsError, refetch: refetchRegistrations } = useAxiosFetch<MyRegistration[]>('/users/me/registrations');
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
 
   const isFaculty = user?.role === 'faculty';
@@ -43,6 +43,14 @@ export default function EventsPage() {
         </div>
         {isFaculty && <Button variant="gold" onClick={() => setIsFormOpen(true)}>Create event</Button>}
       </div>
+
+      {!isFaculty && registrationsError && (
+        <ErrorState
+          variant="inline"
+          message="Could not load your registrations, so events you joined may look open."
+          onRetry={() => void refetchRegistrations()}
+        />
+      )}
 
       {loading ? (
         <div role="status" aria-label="Loading events" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

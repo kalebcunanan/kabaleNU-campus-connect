@@ -67,13 +67,16 @@ export default function HomePage() {
         ) : feed.length === 0 ? (
           <EmptyState message="No posts yet. Be the first to post!" />
         ) : (
-          <div className="space-y-4">
-            {feed.map((post, index) => (
-              <FadeIn key={post._id} index={index}>
-                <PostCard post={post} onDeleted={() => handleDeleted(post._id)} />
-              </FadeIn>
-            ))}
-          </div>
+          <>
+            {error && <ErrorState variant="inline" message={error} onRetry={handleRefresh} />}
+            <div className="space-y-4">
+              {feed.map((post, index) => (
+                <FadeIn key={post._id} index={index}>
+                  <PostCard post={post} onDeleted={() => handleDeleted(post._id)} />
+                </FadeIn>
+              ))}
+            </div>
+          </>
         )}
       </section>
     </div>

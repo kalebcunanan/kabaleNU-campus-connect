@@ -1,6 +1,6 @@
 import type { ComponentPropsWithRef } from 'react';
 
-type ButtonVariant = 'primary' | 'gold' | 'outline';
+type ButtonVariant = 'primary' | 'gold' | 'outline' | 'danger' | 'dangerOutline';
 type ButtonSize = 'md' | 'sm';
 
 interface ButtonProps extends ComponentPropsWithRef<'button'> {
@@ -13,6 +13,8 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary: 'bg-nu-blue text-white hover:bg-nu-blue/90',
   gold: 'bg-nu-gold text-nu-blue hover:bg-nu-gold/90',
   outline: 'border border-nu-blue text-nu-blue hover:bg-nu-blue/5',
+  danger: 'bg-red-600 text-white hover:bg-red-700',
+  dangerOutline: 'border border-red-600 text-red-700 hover:bg-red-50',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

@@ -14,10 +14,9 @@ import ProfilePage from './pages/Profile/ProfilePage';
 import PublicProfilePage from './pages/Profile/PublicProfilePage';
 import FriendsPage from './pages/Friends/FriendsPage';
 import LandingPage from './pages/Landing/LandingPage';
+import NotFoundPage from './pages/NotFound/NotFoundPage';
 import WelcomeOverlay from './components/layout/WelcomeOverlay';
 import { WelcomeProvider } from './context/WelcomeProvider';
-
-const NotFound = () => <div className="p-8 text-center text-2xl font-bold text-red-600">404 - Not Found</div>;
 
 export default function App() {
   return (
@@ -43,7 +42,7 @@ export default function App() {
               <Route path="/profile/:id" element={<PublicProfilePage />} />
             </Route>
 
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
         {/* The overlay sits outside Routes so it can cover a route change. */}

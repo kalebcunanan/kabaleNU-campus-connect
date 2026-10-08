@@ -42,7 +42,7 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({ item, averagePri
   const canDelete = canManage(user, item.seller._id);
   const canMessage = !isOwner && item.status !== 'Sold';
 
-  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -56,7 +56,7 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({ item, averagePri
     }
   };
 
-  const handleMessage = async () => {
+  const handleMessage = async (): Promise<void> => {
     setIsMessaging(true);
     try {
       await startChat(item._id);
@@ -65,7 +65,7 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({ item, averagePri
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (): Promise<void> => {
     setIsConfirmOpen(false);
     try {
       setError(null);
@@ -90,15 +90,15 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({ item, averagePri
         </span>
         {isGoodDeal && (
           <span className="absolute bottom-3 right-3 rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800 shadow-sm">
-            🔥 Good Deal
+            Good Deal
           </span>
         )}
       </div>
 
       <div className="flex flex-1 flex-col gap-1 p-5">
         <h3 className="line-clamp-2 text-lg font-bold text-nu-blue">{item.title}</h3>
-        <p className="text-xl font-black text-nu-gold">₱{item.price.toFixed(2)}</p>
-        {error && <p className="mt-2 rounded bg-red-50 p-2 text-xs text-red-500">{error}</p>}
+        <p className="text-xl font-black text-nu-gold-dark">₱{item.price.toFixed(2)}</p>
+        {error && <p className="mt-2 rounded bg-red-50 p-2 text-xs text-red-700">{error}</p>}
       </div>
 
       <div className="space-y-3 border-t border-gray-100 bg-gray-50 px-5 py-3">
@@ -136,13 +136,9 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({ item, averagePri
               </Button>
             )}
             {canDelete && (
-              <button
-                type="button"
-                onClick={() => setIsConfirmOpen(true)}
-                className="flex-1 rounded-lg border border-red-300 px-3 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-50"
-              >
+              <Button size="sm" variant="dangerOutline" onClick={() => setIsConfirmOpen(true)} className="flex-1">
                 Delete
-              </button>
+              </Button>
             )}
           </div>
         )}
