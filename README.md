@@ -89,7 +89,7 @@ Students and faculty of NU Clark currently rely on scattered Facebook groups for
 ![Friends page](docs/screenshots/friends.png)
 
 ### Leaderboard
-![Leaderboard page](docs/screenshots/leaderboard.png)
+![Leaderboard page](docs/screenshots/leaderboards.png)
 
 ### Mobile (375px)
 ![Home page at 375px](docs/screenshots/mobile-home.png)
