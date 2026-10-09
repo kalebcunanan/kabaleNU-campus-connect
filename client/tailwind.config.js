@@ -3,8 +3,11 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      // The dark and light blues are the outer colors of the auth backdrop gradient.
       colors: {
         'nu-blue': '#2455a6',
+        'nu-blue-dark': '#12295a',
+        'nu-blue-light': '#4a82d9',
         'nu-gold': '#ffd42a',
         'nu-gold-dark': '#8a6d00',
       },

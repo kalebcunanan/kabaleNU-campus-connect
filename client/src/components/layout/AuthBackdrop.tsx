@@ -9,7 +9,7 @@ interface AuthBackdropProps {
 // The caller sets the position classes so the sketch and dots anchor to the right box.
 export default function AuthBackdrop({ className = '', children }: AuthBackdropProps) {
   return (
-    <div className={`w-full overflow-hidden bg-gradient-to-b from-[#12295a] via-nu-blue to-[#4a82d9] font-sans ${className}`}>
+    <div className={`w-full overflow-hidden bg-gradient-to-b from-nu-blue-dark via-nu-blue to-nu-blue-light font-sans ${className}`}>
       <img
         src={sketch}
         alt=""
